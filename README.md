@@ -1,77 +1,136 @@
-# Quota
+# Quota — Claude & Codex usage tracker for macOS
 
-여러 Codex·Claude 구독 계정의 남은 사용량을 한곳에서 확인하는 macOS 메모지형 앱입니다.
-컴팩트·확장 보기 모두 프로그레스 바를 표시합니다.
-뒤 내용이 비치지 않는 배경으로 표시하며 핀 버튼으로 언제든 최상단에 고정할 수 있습니다.
-계정이 네 개일 때 기본 창 크기는 약 360×400pt입니다.
-계정 수에 맞춰 높이를 줄이고, 많아지면 목록만 스크롤합니다.
+A native **multi-account Claude and OpenAI Codex subscription quota monitor**.
+Keep remaining usage and reset times beside your editor in a small, pinnable
+sticky-note window, or glance at your macOS menu bar.
 
-## 실행
+**macOS 14+ · Apple Silicon download · SwiftUI/AppKit · MIT · No app subscription**
 
-macOS 14 이상과 Swift 6/Xcode Command Line Tools가 필요합니다.
+> 여러 Claude·Codex 구독 계정의 남은 사용량을 한 화면에서 확인하는 macOS 앱입니다.
+> 현재 앱 UI는 한국어입니다. / The current app interface is in Korean.
+
+## Install in one minute
+
+The prebuilt community release needs **no Xcode, Swift toolchain or Claude CLI**.
+Codex accounts additionally require the [Codex CLI](https://developers.openai.com/codex/cli/).
+
+Download and inspect the versioned installer, then run it:
 
 ```sh
+curl -fL https://raw.githubusercontent.com/gridi-ai/quota/v0.1.0/scripts/install.sh -o /tmp/quota-install.sh
+less /tmp/quota-install.sh
+bash /tmp/quota-install.sh
+open "$HOME/Applications/Quota.app"
+```
+
+The script installs v0.1.0 to `~/Applications`, verifies SHA-256 and the bundle's
+ad-hoc signature, uses no sudo, and leaves your account data untouched.
+`--destination DIRECTORY` changes the install folder. To update an existing copy,
+quit Quota and run the script with `--replace`; it refuses unrelated apps and symlinks.
+
+Prefer a manual install? Download `Quota-0.1.0-macOS-arm64.zip` from
+[Releases](https://github.com/gridi-ai/quota/releases), unzip and drag `Quota.app`
+into Applications. Release checksums are in `SHA256SUMS`.
+
+**Apple signing:** this preview is ad-hoc signed, **not notarized**. If macOS blocks
+it, review the source and use System Settings → Privacy & Security → Open Anyway.
+The installer does not disable Gatekeeper or remove quarantine attributes.
+Intel Macs currently need the [source build](#build-from-source).
+
+## What it does
+
+- Multiple Claude and Codex accounts with explicit, verified account identities.
+- **Remaining percentage**, progress bars, real quota windows and reset times.
+- Compact / expanded widget, solid light / dark themes and optional always-on-top pin.
+- Menu bar percentages for one selected account per provider; no cross-account averages.
+- Independent five-minute refresh while running, manual refresh and refresh on wake.
+- Last-known values and per-account errors instead of losing every account on one failure.
+- Local-only state: no Quota server, analytics, cloud sync or app subscription.
+
+This tracks **subscription limits**, not API billing or token-cost estimates.
+It does not buy quota, switch model accounts or make model requests to measure usage.
+Missing limits are unavailable, never guessed as 100%.
+
+## Connect your first account
+
+Open Quota, select **계정 추가** (Add account), choose a provider and enter an alias.
+
+### Codex / ChatGPT
+
+1. Install the official Codex CLI and select its executable in Quota.
+2. A new account gets its own app-created `CODEX_HOME` profile and browser login.
+3. After login, select **연결 확인** (Check connection).
+4. For an existing profile, choose **기존 Codex 프로필 연결** and provide its directory.
+   Use a different profile for each account.
+
+Quota talks to `codex app-server` over local stdio; the CLI owns credential storage
+and refresh. API-key accounts do not represent ChatGPT subscription quota.
+
+### Claude / Claude Code
+
+1. Quota opens your **default browser**, where Google or email login can complete.
+2. Approve the provider's consent yourself, then copy the **entire authorization code**.
+3. Select **인증 코드 입력…**, paste and choose **인증 코드로 연결**.
+   Cmd+V, Ctrl+V, the paste button and Enter are supported.
+4. Additional accounts require their own browser authorization.
+
+The consent screen identifies **Claude Code**, because this preview uses its
+compatible public OAuth client with PKCE and only `user:profile` scope.
+After pairing, neither a browser nor Claude CLI must stay open.
+Browser cookies and existing CLI tokens are not imported.
+
+Claude usage uses an **undocumented provider OAuth endpoint**, not a supported
+public Anthropic API contract. Codex's app-server protocol is also version-sensitive.
+Provider changes can break retrieval; this app is not affiliated with OpenAI or Anthropic.
+
+## Controls and privacy
+
+Pin keeps the window on top. Closing hides the window; reopen it from the menu bar.
+**Quit** stops refresh and Codex helpers. An asterisk in the menu bar means stale or
+failed last-known data; a dash means unavailable.
+
+Aliases, verified account identities and last snapshots are stored in
+`~/Library/Application Support/Quota/accounts.json`. Claude tokens stay in
+account-UUID-specific macOS Keychain entries. Authorization codes and PKCE
+verifiers are never serialized into the account file.
+
+Removing a row does **not** revoke provider grants, delete Keychain entries or
+erase Codex profiles. To fully disconnect, also revoke the grant with the provider
+and remove the corresponding local credentials yourself.
+
+## Build from source
+
+Requires macOS 14+ and **Swift 6+ / Xcode Command Line Tools**. No package dependencies.
+
+```sh
+git clone https://github.com/gridi-ai/quota.git
+cd quota
 bash scripts/build-app.sh
 open dist/Quota.app
 ```
 
-개발 실행과 테스트:
-
 ```sh
-swift run Quota
-swift test
-```
-
-예시 데이터 화면은 실제 연결과 분리되어 있습니다.
-
-```sh
+swift test --enable-code-coverage
 swift run Quota --demo
 ```
 
-`--demo`는 계정을 저장하거나 사용량을 조회하지 않습니다.
-`--expanded`, `--light`, `--dark`로 화면 검증 모드를 선택할 수 있습니다.
+Demo mode uses synthetic data without saving accounts or querying providers.
+`--light`, `--dark` and `--expanded` select inspection modes.
+Quit existing instances before switching modes.
 
-## 계정 연결
+## Project status
 
-- **Codex:** 설치된 Codex CLI의 실행 파일을 지정합니다. 새 계정은 앱이 만든 별도
-  `CODEX_HOME`으로 브라우저 로그인을 진행합니다. 이미 로그인된 프로필은
-  “기존 Codex 프로필 연결”에서 그 경로를 직접 지정할 수 있습니다.
-  계정마다 서로 다른 프로필을 사용해야 합니다. 로그인 후 “연결 확인”을 누릅니다.
-- **Claude:** 앱 내 웹뷰 대신 기본 브라우저에서 로그인합니다. Google 또는 이메일로
-  로그인한 뒤 브라우저가 표시하는 인증 코드 전체를 복사합니다. 위젯의
-  “인증 코드 입력…”을 눌러 붙여넣고 “인증 코드로 연결”을 누릅니다.
-  Cmd+V·Ctrl+V와 “붙여넣기” 버튼을 지원하며 Enter로 연결할 수 있습니다.
-  계정마다 별도 OAuth 인증과 Keychain 항목을 사용합니다.
-  Claude Code 호환 OAuth 클라이언트를 사용하므로 동의 화면에는 “Claude Code”로 표시됩니다.
-  앱은 사용량 조회에 필요한 `user:profile` 권한만 요청합니다.
-  연결 후에는 브라우저·Claude CLI를 켜두지 않아도 앱 실행 중 5분마다 조회합니다.
+Early native macOS preview. The core suite has 41 passing tests. Real application
+retrieval was checked with two distinct Codex accounts and one Claude account,
+including Claude credentials surviving restart. Second-Claude live isolation,
+actual sleep/wake and a complete live token-expiry cycle remain extended checks.
 
-로그인과 실제 조회는 연결한 인증이 유효할 때 가능합니다. Claude 조회는
-OAuth 프로필·사용량 경로를 사용하며 공식 공개 API 계약은 아닙니다.
-재로그인이 필요한 경우 해당 계정의 “브라우저 로그인…”으로 다시 인증합니다.
-기존 브라우저의 쿠키·CLI의 토큰을 가져오지 않습니다.
-기존 웹뷰로 연결했던 Claude 계정은 다시 인증해야 하며 별칭·마지막 관측값은 유지됩니다.
+See [the publication audit](docs/PUBLICATION-AUDIT.md) and
+[market / distribution assessment](docs/MARKET.md).
+Report bugs through [GitHub Issues](https://github.com/gridi-ai/quota/issues),
+including macOS / Quota / CLI versions and redacted errors. Never attach tokens,
+authorization codes, account files or browser cookies.
 
-## 위젯
+## License
 
-- 핀: 항상 위에 표시.
-- 보기 설정: 컴팩트/확장, 시스템/페이퍼/다크.
-- 메뉴 막대 아이콘: 위젯 다시 열기, 새로고침, 계정 추가, 설정, 종료.
-- 메뉴 막대 숫자: `C 43% · Cl 61%`처럼 제공자별 대표 계정의 남은 비율을 표시.
-  계정마다 가장 적게 남은 한도를 사용하며 계정·한도를 평균내지 않습니다.
-  대표 계정은 메뉴의 “메뉴 막대 표시 계정” 또는 계정 메뉴에서 선택합니다.
-  `*`는 오래되거나 조회에 실패한 마지막 관측값, `—`는 아직 없는 값입니다.
-- 닫기: 창만 숨김. 종료: 자동 갱신과 CLI 도우미 종료.
-- 계정 메뉴: 상세 보기, 연결 확인, 로그인 열기, 별칭 변경, 목록에서 제거.
-- 조회 실패: 마지막 정상 관측값을 유지하며 실패 원인과 관측 시각을 표시.
-- 퍼센트는 **남은 비율**입니다. 없는 한도는 100%로 추정하지 않습니다.
-
-계정 별칭, 확인된 계정 식별자, 마지막 사용량은
-`~/Library/Application Support/Quota/accounts.json`에 저장됩니다.
-Claude 인증 토큰은 계정 UUID별 macOS Keychain 항목에만 저장하고 만료 전에 갱신합니다.
-인증 코드와 PKCE 검증값은 계정 파일에 저장하지 않습니다.
-Codex 로그인은 지정한 CLI 프로필이 관리합니다.
-목록에서 제거해도 원래 계정이나 로그인 데이터는 삭제하지 않습니다.
-
-공개 전 credential·개인 경로 감사의 범위와 결과는
-[docs/PUBLICATION-AUDIT.md](docs/PUBLICATION-AUDIT.md)에 정리했습니다.
+[MIT](LICENSE). Free source and community build. No paid recurring plan.

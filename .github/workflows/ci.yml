@@ -1,0 +1,30 @@
+name: Verify Quota
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Scan public Git history for credentials
+        run: |
+          brew install gitleaks
+          gitleaks git --redact --no-banner
+      - name: Test core behavior
+        run: swift test --enable-code-coverage
+      - name: Check shell scripts
+        run: |
+          brew install shellcheck
+          bash -n scripts/*.sh
+          shellcheck scripts/*.sh
+      - name: Build and verify application
+        run: |
+          bash scripts/build-app.sh
+          codesign --verify --deep --strict dist/Quota.app
+          bash scripts/package-release.sh

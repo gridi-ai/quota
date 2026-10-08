@@ -46,3 +46,13 @@ Before the first public upload:
 
 Future public changes and downloadable bundles require a separate scan. Local
 builds are not published simply because the source scan passed.
+
+## First downloadable bundle
+
+The Apple Silicon 0.1.0 release is built without debug information and with a
+source-file prefix map. Binary string inspection found no personal home paths,
+developer identifiers, private-key blocks or credential-format literals.
+The ZIP contains only Quota.app's executable, manifest and signature files, not
+account data or build caches. Packaging omits resource forks and extended attributes.
+The code signature verifies, but it is ad-hoc: no Developer ID or notarization is
+claimed. SHA-256 accompanies the ZIP; checksums do not authenticate an Apple identity.
