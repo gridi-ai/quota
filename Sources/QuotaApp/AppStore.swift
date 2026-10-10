@@ -22,6 +22,14 @@ final class AppStore: ObservableObject {
         didSet { if !isDemo { UserDefaults.standard.set(theme, forKey: "theme") }; onThemeChanged?(theme) }
     }
     @Published var filter = "all"
+    @Published var language = UserDefaults.standard.string(forKey: "appLanguage") ?? "system" {
+        didSet {
+            var arguments = UserDefaults.standard.volatileDomain(forName: UserDefaults.argumentDomain)
+            arguments["appLanguage"] = language
+            UserDefaults.standard.setVolatileDomain(arguments, forName: UserDefaults.argumentDomain)
+            if !isDemo { UserDefaults.standard.set(language, forKey: "appLanguage") }
+        }
+    }
     @Published var menuSelections = UserDefaults.standard.dictionary(forKey: "menuSelections") as? [String: String] ?? [:] {
         didSet {
             if !isDemo { UserDefaults.standard.set(menuSelections, forKey: "menuSelections") }
@@ -38,6 +46,7 @@ final class AppStore: ObservableObject {
     }
     var onPinChanged: ((Bool) -> Void)?
     var onThemeChanged: ((String) -> Void)?
+    var onSettingsRequested: (() -> Void)?
     private var claude: [UUID: ClaudeSession] = [:]
     private var codex: [UUID: CodexClient] = [:]
     private var refreshTimer: Timer?
@@ -62,7 +71,7 @@ final class AppStore: ObservableObject {
             }
         } catch {
             storageAvailable = false
-            globalError = "계정 정보를 읽을 수 없습니다. 기존 파일은 유지했습니다: \(error.localizedDescription)"
+            globalError = tr("Cannot read account data. The existing file was preserved: %@", error.localizedDescription)
         }
         refreshTimer = Timer.scheduledTimer(withTimeInterval: 300, repeats: true) { [weak self] _ in
             Task { @MainActor in self?.refreshAll() }
@@ -92,10 +101,10 @@ final class AppStore: ObservableObject {
 
     func add(alias: String, provider: Provider, existingHome: String?, executablePath: String?) async throws {
         guard canEditAccounts else {
-            throw UsageError.providerMessage("계정 파일을 읽지 못해 변경을 중지했습니다. 기존 파일을 복구한 뒤 앱을 다시 열어 주세요.")
+            throw UsageError.providerMessage(tr("Account changes are paused because the account file could not be read. Restore the file and reopen the app."))
         }
         let alias = alias.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !alias.isEmpty else { throw UsageError.providerMessage("계정 별칭을 입력해 주세요.") }
+        guard !alias.isEmpty else { throw UsageError.providerMessage(tr("Enter an account alias.")) }
         var account = Account(alias: alias, provider: provider)
         if provider == .codex {
             guard let executablePath, FileManager.default.isExecutableFile(atPath: executablePath) else {
@@ -106,17 +115,17 @@ final class AppStore: ObservableObject {
                 ? root.appendingPathComponent("codex/\(account.id.uuidString)", isDirectory: true).path
                 : NSString(string: requested).expandingTildeInPath
             guard let home = account.codexHome, home.hasPrefix("/") else {
-                throw UsageError.providerMessage("Codex 프로필은 절대 경로로 지정해 주세요.")
+                throw UsageError.providerMessage(tr("Use an absolute path for the Codex profile."))
             }
             if ledger.accounts.contains(where: { $0.codexHome == home }) {
-                throw UsageError.providerMessage("이 Codex 프로필은 이미 연결되어 있습니다.")
+                throw UsageError.providerMessage(tr("This Codex profile is already connected."))
             }
             try FileManager.default.createDirectory(atPath: home, withIntermediateDirectories: true)
         }
         ledger.accounts.append(account)
         guard save() else {
             ledger.remove(account.id)
-            throw UsageError.providerMessage(globalError ?? "계정 정보를 저장할 수 없습니다.")
+            throw UsageError.providerMessage(globalError ?? tr("Cannot save account data."))
         }
         if provider == .codex, let executablePath { codexPath = executablePath }
         showAdd = false
@@ -138,7 +147,7 @@ final class AppStore: ObservableObject {
                 try session(for: account).showLogin()
                 claudeLoginPending.insert(account.id)
                 claudeLoginRetryable.remove(account.id)
-                messages[account.id] = "브라우저에서 로그인한 뒤 인증 코드 입력을 눌러 주세요."
+                messages[account.id] = tr("Sign in in your browser, then choose Enter authorization code.")
             } catch { messages[account.id] = error.localizedDescription }
         } else {
             Task { await loginCodex(account.id) }
@@ -155,7 +164,7 @@ final class AppStore: ObservableObject {
             if try ledger.apply(snapshot, to: id) {
                 claudeLoginPending.remove(id)
                 claudeLoginRetryable.remove(id)
-                messages[id] = snapshot.limits.isEmpty ? "이 계정의 사용량 한도가 제공되지 않았습니다." : nil
+                messages[id] = snapshot.limits.isEmpty ? tr("No usage limits were provided for this account.") : nil
                 save()
             }
         } catch {
@@ -207,7 +216,7 @@ final class AppStore: ObservableObject {
                 case .organizations(let choices):
                     guard ledger.accounts.contains(where: { $0.id == id }) else { return }
                     organizations[id] = choices
-                    messages[id] = "사용량을 표시할 조직을 선택해 주세요."
+                    messages[id] = tr("Choose an organization to show its usage.")
                     return
                 }
             }
@@ -215,7 +224,7 @@ final class AppStore: ObservableObject {
                 ? ledger.changeOrganization(snapshot, for: id)
                 : ledger.apply(snapshot, to: id)
             if applied {
-                messages[id] = snapshot.limits.isEmpty ? "이 계정의 사용량 한도가 제공되지 않았습니다." : nil
+                messages[id] = snapshot.limits.isEmpty ? tr("No usage limits were provided for this account.") : nil
                 organizations[id] = nil
                 save()
             }
@@ -232,7 +241,7 @@ final class AppStore: ObservableObject {
         do {
             let url = try await client(for: account).startLogin()
             NSWorkspace.shared.open(url)
-            messages[id] = "브라우저 로그인 후 연결 확인을 눌러 주세요."
+            messages[id] = tr("After browser sign-in, choose Check connection.")
         } catch { messages[id] = error.localizedDescription }
     }
 
@@ -281,7 +290,7 @@ final class AppStore: ObservableObject {
             try encoder.encode(ledger).write(to: root.appendingPathComponent("accounts.json"), options: .atomic)
             return true
         } catch {
-            globalError = "계정 정보를 저장할 수 없습니다: \(error.localizedDescription)"
+            globalError = tr("Cannot save account data: %@", error.localizedDescription)
             return false
         }
     }
@@ -300,7 +309,15 @@ final class AppStore: ObservableObject {
     }
 
     private func loadDemo() {
-        do { ledger = try DemoData.ledger() }
+        do {
+            codexPath = "/usr/local/bin/codex"
+            ledger = CommandLine.arguments.contains("--demo-empty") ? AccountLedger() : try DemoData.ledger()
+            if CommandLine.arguments.contains("--demo-oauth"),
+               let account = ledger.accounts.first(where: { $0.provider == .claude }) {
+                claudeLoginPending.insert(account.id)
+                messages[account.id] = tr("Sign in in your browser, then choose Enter authorization code.")
+            }
+        }
         catch { globalError = error.localizedDescription }
     }
 }

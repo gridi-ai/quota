@@ -43,7 +43,7 @@ struct WidgetView: View {
                 ScrollView {
                     VStack(spacing: 0) {
                         if store.accounts.isEmpty {
-                            Text("이 제공자의 계정이 없습니다.")
+                            Text(tr("No accounts for this provider."))
                                 .foregroundStyle(Palette.muted(scheme)).padding(24)
                         }
                         ForEach(store.accounts) { account in
@@ -54,79 +54,89 @@ struct WidgetView: View {
             }
             Divider()
             HStack {
-                Button("계정 추가…", systemImage: "plus") { store.showAdd = true }
+                Button(tr("Add account…"), systemImage: "plus") { store.showAdd = true }
                     .buttonStyle(.plain).disabled(!store.canEditAccounts)
                 Spacer()
-                Text(store.isDemo ? "예시 데이터 · 데모" : "5분마다 자동 갱신")
+                Text(tr(store.isDemo ? "Sample data · Demo" : "Refreshes every 5 min"))
                     .foregroundStyle(Palette.muted(scheme))
             }.font(.system(size: 12)).padding(.horizontal, 20).padding(.vertical, 12)
         }
         .background(Palette.paper(scheme))
+        .onAppear {
+            if store.isDemo, CommandLine.arguments.contains("--demo-oauth") || CommandLine.arguments.contains("--demo-details") {
+                details = store.ledger.accounts.first(where: { $0.provider == .claude })
+            } else if store.isDemo, CommandLine.arguments.contains("--demo-add") {
+                store.showAdd = true
+            }
+        }
         .sheet(isPresented: $store.showAdd) { AddAccountView(store: store) }
         .sheet(item: $details) { account in
             AccountDetailView(store: store, account: account)
         }
-        .alert("계정 목록에서 제거할까요?", isPresented: Binding(
+        .alert(tr("Remove this account from the list?"), isPresented: Binding(
             get: { removal != nil }, set: { if !$0 { removal = nil } }
         )) {
-            Button("취소", role: .cancel) { removal = nil }
-            Button("목록에서 제거", role: .destructive) {
+            Button(tr("Cancel"), role: .cancel) { removal = nil }
+            Button(tr("Remove from list"), role: .destructive) {
                 if let account = removal { store.remove(account) }
                 removal = nil
             }
         } message: {
-            Text("이 앱의 표시와 자동 조회를 중지합니다. 원래 계정과 로그인 데이터는 삭제하지 않습니다.")
+            Text(tr("Stops display and automatic refresh in this app. Your provider account and login data are not deleted."))
         }
-        .alert("계정 별칭 변경", isPresented: Binding(
+        .alert(tr("Rename account"), isPresented: Binding(
             get: { rename != nil }, set: { if !$0 { rename = nil } }
         )) {
-            TextField("별칭", text: $renamedAlias)
-            Button("취소", role: .cancel) { rename = nil }
-            Button("변경") {
+            TextField(tr("Alias"), text: $renamedAlias)
+            Button(tr("Cancel"), role: .cancel) { rename = nil }
+            Button(tr("Rename")) {
                 if let account = rename { store.rename(account.id, alias: renamedAlias) }
                 rename = nil
             }
         }
-        .alert("표시할 Claude 조직을 변경할까요?", isPresented: Binding(
+        .alert(tr("Change the Claude organization?"), isPresented: Binding(
             get: { pendingOrganization != nil }, set: { if !$0 { pendingOrganization = nil } }
         )) {
-            Button("취소", role: .cancel) { pendingOrganization = nil }
-            Button("조직 변경") {
+            Button(tr("Cancel"), role: .cancel) { pendingOrganization = nil }
+            Button(tr("Change organization")) {
                 if let organization = pendingOrganization, let account = pendingOrganizationAccount {
                     store.selectOrganization(organization.id, for: account.id, confirmedChange: true)
                 }
                 pendingOrganization = nil
             }
         } message: {
-            Text("같은 Claude 계정인지 다시 확인한 뒤 새 조직의 사용량으로 연결합니다. 조회에 실패하면 기존 연결을 유지합니다.")
+            Text(tr("Verifies the same Claude account before connecting the new organization's usage. A failed read keeps the existing connection."))
         }
+        .environment(\.locale, appLocale)
     }
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                Text("남은 사용량").font(.system(size: 18, weight: .semibold))
+                Text(tr("Remaining quota")).font(.system(size: 18, weight: .semibold))
                 Spacer()
                 Button {
                     store.pinned.toggle()
                 } label: { Image(systemName: store.pinned ? "pin.fill" : "pin") }
-                    .help("항상 위에 표시").accessibilityLabel("항상 위에 표시")
-                    .accessibilityValue(store.pinned ? "켜짐" : "꺼짐")
+                    .help(tr("Always on top")).accessibilityLabel(tr("Always on top"))
+                    .accessibilityValue(tr(store.pinned ? "On" : "Off"))
                 Button { store.refreshAll() } label: { Image(systemName: "arrow.clockwise") }
-                    .help("전체 새로고침").accessibilityLabel("전체 새로고침").disabled(store.isDemo)
+                    .help(tr("Refresh all")).accessibilityLabel(tr("Refresh all")).disabled(store.isDemo)
                 Menu {
-                    Toggle("컴팩트 보기", isOn: $store.compact)
-                    Picker("테마", selection: $store.theme) {
-                        Text("시스템").tag("system")
-                        Text("페이퍼").tag("light")
-                        Text("다크").tag("dark")
+                    Toggle(tr("Compact view"), isOn: $store.compact)
+                    Picker(tr("Theme"), selection: $store.theme) {
+                        Text(tr("System")).tag("system")
+                        Text(tr("Paper")).tag("light")
+                        Text(tr("Dark")).tag("dark")
                     }
+                    Divider()
+                    Button(tr("Settings…")) { store.onSettingsRequested?() }
                 } label: { Image(systemName: "slider.horizontal.3") }
                     .menuStyle(.borderlessButton).fixedSize()
-                    .help("보기 설정").accessibilityLabel("보기 설정")
+                    .help(tr("View options")).accessibilityLabel(tr("View options"))
             }.buttonStyle(.borderless)
-            Picker("계정 필터", selection: $store.filter) {
-                Text("전체 \(store.ledger.accounts.count)").tag("all")
+            Picker(tr("Account filter"), selection: $store.filter) {
+                Text(tr("All %d", store.ledger.accounts.count)).tag("all")
                 Text("Codex").tag("codex")
                 Text("Claude").tag("claude")
             }.pickerStyle(.segmented).labelsHidden()
@@ -136,10 +146,11 @@ struct WidgetView: View {
     private var empty: some View {
         VStack(spacing: 12) {
             Image(systemName: "rectangle.stack").font(.system(size: 28)).foregroundStyle(Palette.muted(scheme))
-            Text("첫 계정을 연결해 주세요.").font(.system(size: 15, weight: .medium))
-            Text("Codex와 Claude의 남은 사용량을\n작은 창에서 함께 확인하세요.")
+            Text(tr("Connect your first account.")).font(.system(size: 15, weight: .medium))
+            Text(tr("Keep Codex and Claude quota\ntogether in a small window."))
                 .font(.system(size: 14)).foregroundStyle(Palette.muted(scheme)).multilineTextAlignment(.center)
-            Button("계정 연결…") { store.showAdd = true }.buttonStyle(.borderedProminent)
+                .fixedSize(horizontal: false, vertical: true)
+            Button(tr("Connect account…")) { store.showAdd = true }.buttonStyle(.borderedProminent)
                 .disabled(!store.canEditAccounts)
         }.frame(maxWidth: .infinity, maxHeight: .infinity).padding(24)
     }
@@ -159,7 +170,7 @@ struct WidgetView: View {
                     }
                     if limits.isEmpty {
                         Text("—").foregroundStyle(Palette.muted(scheme))
-                            .accessibilityLabel("사용량 미조회")
+                            .accessibilityLabel(tr("Usage not fetched"))
                     }
                     accountMenu(account)
                 }.padding(.top, 4)
@@ -171,18 +182,18 @@ struct WidgetView: View {
                 }.padding(.top, 8)
                 ForEach(limits) { limit in LimitView(limit: limit, compact: false) }
                 if limits.isEmpty {
-                    Text("사용량을 아직 조회하지 않았습니다.")
+                    Text(tr("Usage has not been fetched yet."))
                         .font(.caption).foregroundStyle(Palette.muted(scheme))
                 }
             }
             if store.busy.contains(account.id) {
-                Text("사용량 확인 중…").font(.caption).foregroundStyle(Palette.muted(scheme))
+                Text(tr("Checking usage…")).font(.caption).foregroundStyle(Palette.muted(scheme))
             } else if let message = store.messages[account.id] {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(message).font(.caption).foregroundStyle(Palette.muted(scheme)).textSelection(.enabled)
                     HStack(spacing: 12) {
-                        Button("로그인 열기…") { store.connect(account) }
-                        Button(store.claudeLoginPending.contains(account.id) ? "인증 코드 입력…" : "연결 확인") {
+                        Button(tr("Open sign-in…")) { store.connect(account) }
+                        Button(tr(store.claudeLoginPending.contains(account.id) ? "Enter authorization code…" : "Check connection")) {
                             if store.claudeLoginPending.contains(account.id) { details = account }
                             else { Task { await store.refresh(account.id) } }
                         }
@@ -209,9 +220,9 @@ struct WidgetView: View {
                     if !store.compact || stale {
                         HStack(spacing: 4) {
                             if stale { Image(systemName: "clock").accessibilityHidden(true) }
-                            Text(stale ? "마지막 관측" : "갱신")
+                            Text(tr(stale ? "Last observed" : "Updated"))
                             Text(snapshot.observedAt, style: .relative)
-                            Text("전")
+                            Text(tr("ago"))
                         }.font(.system(size: 11)).foregroundStyle(Palette.muted(scheme))
                     }
                 }
@@ -228,8 +239,8 @@ struct WidgetView: View {
                     .lineLimit(1)
                 if store.compact, let snapshot, snapshot.limits.count > 2 {
                     Text("+\(snapshot.limits.count - 2)")
-                        .help("추가 한도는 상세 보기에서 확인할 수 있습니다.")
-                        .accessibilityLabel("추가 한도 \(snapshot.limits.count - 2)개")
+                        .help(tr("See additional limits in account details."))
+                        .accessibilityLabel(tr("%d additional limits", snapshot.limits.count - 2))
                 }
             }.font(.system(size: 12)).foregroundStyle(Palette.muted(scheme))
         }.frame(maxWidth: .infinity, alignment: .leading)
@@ -237,19 +248,19 @@ struct WidgetView: View {
 
     private func accountMenu(_ account: Account) -> some View {
         Menu {
-            Button("상세 보기…") { details = account }
-            Button("메뉴 막대에 표시") { store.showInMenuBar(account) }
-            Button(store.claudeLoginPending.contains(account.id) ? "인증 코드 입력…" : "연결 확인") {
+            Button(tr("Account details…")) { details = account }
+            Button(tr("Show in menu bar")) { store.showInMenuBar(account) }
+            Button(tr(store.claudeLoginPending.contains(account.id) ? "Enter authorization code…" : "Check connection")) {
                 if store.claudeLoginPending.contains(account.id) { details = account }
                 else { Task { await store.refresh(account.id) } }
             }.disabled(store.isDemo)
-            Button("로그인 열기…") { store.connect(account) }.disabled(store.isDemo)
-            Button("별칭 변경…") { renamedAlias = account.alias; rename = account }.disabled(!store.canEditAccounts)
+            Button(tr("Open sign-in…")) { store.connect(account) }.disabled(store.isDemo)
+            Button(tr("Rename…")) { renamedAlias = account.alias; rename = account }.disabled(!store.canEditAccounts)
             Divider()
-            Button("목록에서 제거…", role: .destructive) { removal = account }.disabled(!store.canEditAccounts)
+            Button(tr("Remove from list…"), role: .destructive) { removal = account }.disabled(!store.canEditAccounts)
         } label: { Image(systemName: "ellipsis") }
             .menuStyle(.borderlessButton).menuIndicator(.hidden).frame(width: 28)
-            .help("\(account.alias) 관리").accessibilityLabel("\(account.alias) 관리")
+            .help(tr("Manage %@", account.alias)).accessibilityLabel(tr("Manage %@", account.alias))
     }
 }
 
@@ -257,6 +268,7 @@ struct LimitView: View {
     let limit: UsageLimit
     let compact: Bool
     @Environment(\.colorScheme) private var scheme
+    private let locale = appLocale
 
     var body: some View {
         VStack(alignment: compact ? .trailing : .leading, spacing: 4) {
@@ -264,13 +276,13 @@ struct LimitView: View {
                 Text("\(limit.remainingPercent, specifier: "%.0f")%")
                     .font(.system(size: 14, weight: .semibold)).monospacedDigit()
                     .foregroundStyle(Palette.quota(limit.remainingPercent, scheme))
-                Text(limit.title).font(.system(size: 11)).foregroundStyle(Palette.muted(scheme)).lineLimit(1)
-                    .help(limit.title)
+                Text(limit.localizedTitle).font(.system(size: 11)).foregroundStyle(Palette.muted(scheme)).lineLimit(1)
+                    .help(limit.localizedTitle)
             } else {
                 HStack {
-                    Text(limit.title).font(.system(size: 12)).foregroundStyle(Palette.muted(scheme))
+                    Text(limit.localizedTitle).font(.system(size: 12)).foregroundStyle(Palette.muted(scheme))
                     Spacer()
-                    Text("\(limit.remainingPercent, specifier: "%.0f")% 남음")
+                    Text(tr("%.0f%% remaining", limit.remainingPercent))
                         .font(.system(size: 14, weight: .semibold)).monospacedDigit()
                         .foregroundStyle(Palette.quota(limit.remainingPercent, scheme))
                 }
@@ -283,26 +295,26 @@ struct LimitView: View {
                 }
             }.frame(height: 4)
             if limit.remainingPercent <= 20 {
-                Text(limit.remainingPercent == 0 ? "소진" : "부족")
+                Text(tr(limit.remainingPercent == 0 ? "Exhausted" : "Low"))
                     .font(.system(size: 11)).foregroundStyle(Palette.muted(scheme))
             }
             if !compact, let reset = limit.resetsAt {
                 HStack(spacing: 4) {
-                    Text(reset, format: .dateTime.month().day().hour().minute())
-                    Text("리셋")
+                    Text(reset.formatted(.dateTime.month().day().hour().minute().locale(locale)))
+                    Text(tr("reset"))
                 }.font(.system(size: 12)).foregroundStyle(Palette.muted(scheme))
             }
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(limit.title) 남은 사용량")
+        .accessibilityLabel(tr("%@ remaining quota", limit.localizedTitle))
         .accessibilityValue(accessibleValue)
-        .help("\(limit.title): \(Int(limit.remainingPercent.rounded()))% 남음")
+        .help(tr("%@: %d%% remaining", limit.localizedTitle, Int(limit.remainingPercent.rounded())))
     }
 
     private var accessibleValue: String {
-        var value = "\(Int(limit.remainingPercent.rounded()))퍼센트"
-        if limit.remainingPercent <= 20 { value += limit.remainingPercent == 0 ? ", 소진" : ", 부족" }
-        if let reset = limit.resetsAt { value += ", \(reset.formatted()) 리셋" }
+        var value = tr("%d percent", Int(limit.remainingPercent.rounded()))
+        if limit.remainingPercent <= 20 { value += ", " + tr(limit.remainingPercent == 0 ? "Exhausted" : "Low") }
+        if let reset = limit.resetsAt { value += ", " + tr("Resets %@", reset.formatted(.dateTime.locale(locale))) }
         return value
     }
 }
@@ -321,29 +333,29 @@ struct AddAccountView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("계정 연결").font(.title2.weight(.semibold))
+            Text(tr("Connect account")).font(.title2.weight(.semibold))
             Form {
-                TextField("별칭", text: $alias, prompt: Text("개인 계정"))
-                Picker("제공자", selection: $provider) {
+                TextField(tr("Alias"), text: $alias, prompt: Text(tr("Personal account")))
+                Picker(tr("Provider"), selection: $provider) {
                     ForEach(Provider.allCases, id: \.self) { Text($0.title).tag($0) }
                 }
                 if provider == .codex {
-                    Toggle("기존 Codex 프로필 연결", isOn: $useExistingHome)
+                    Toggle(tr("Connect existing Codex profile"), isOn: $useExistingHome)
                     if useExistingHome { TextField("CODEX_HOME", text: $existingHome, prompt: Text("~/.codex")) }
-                    TextField("Codex 실행 파일", text: $executablePath)
+                    TextField(tr("Codex executable"), text: $executablePath)
                 }
             }
             if let connectionError {
                 Text(connectionError).font(.caption).foregroundStyle(.red).textSelection(.enabled)
             }
-            Text(provider == .claude
-                 ? "기본 브라우저에서 Claude에 로그인합니다. 로그인 뒤 표시되는 인증 코드를 앱에 입력하면 브라우저나 CLI를 켜두지 않아도 5분마다 조회합니다."
-                 : "새 계정은 별도 Codex 프로필로 로그인합니다. 기존 프로필을 선택하면 그 프로필의 계정만 조회합니다.")
+            Text(tr(provider == .claude
+                 ? "Sign in to Claude in your default browser, then enter the authorization code here. Usage refreshes every five minutes without keeping a browser or CLI open."
+                 : "New accounts sign in with separate Codex profiles. An existing profile reads only that profile's account."))
                 .font(.system(size: 13)).foregroundStyle(Palette.muted(scheme)).fixedSize(horizontal: false, vertical: true)
             HStack {
                 Spacer()
-                Button("취소") { dismiss() }.keyboardShortcut(.cancelAction)
-                Button("연결") {
+                Button(tr("Cancel")) { dismiss() }.keyboardShortcut(.cancelAction)
+                Button(tr("Connect")) {
                     connecting = true
                     connectionError = nil
                     Task {
@@ -356,8 +368,11 @@ struct AddAccountView: View {
                 }.keyboardShortcut(.defaultAction)
                     .disabled(connecting || alias.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || (provider == .codex && useExistingHome && existingHome.isEmpty))
             }
-        }.padding(24).frame(width: 320)
-            .onAppear { executablePath = store.codexPath }
+        }.padding(24).frame(width: 400)
+            .onAppear {
+                executablePath = store.codexPath
+                if store.isDemo, CommandLine.arguments.contains("--demo-claude") { provider = .claude }
+            }
     }
 }
 
@@ -375,39 +390,40 @@ struct AccountDetailView: View {
             if let snapshot = store.ledger.snapshots[account.id] {
                 Text(snapshot.displayIdentity).font(.caption).textSelection(.enabled)
                 ForEach(snapshot.limits) { LimitView(limit: $0, compact: false) }
-                Text("마지막 갱신: \(snapshot.observedAt.formatted())")
+                Text(tr("Last updated: %@", snapshot.observedAt.formatted(.dateTime.locale(appLocale))))
                     .font(.caption).foregroundStyle(Palette.muted(scheme)).textSelection(.enabled)
             } else if !store.claudeLoginPending.contains(account.id) {
-                Text("로그인 후 연결 확인을 눌러 주세요.").foregroundStyle(Palette.muted(scheme))
+                Text(tr("Sign in, then choose Check connection.")).foregroundStyle(Palette.muted(scheme))
             }
             if let message = store.messages[account.id] {
                 Text(message).font(.caption).textSelection(.enabled)
+                    .fixedSize(horizontal: false, vertical: true)
             }
             if store.claudeLoginPending.contains(account.id) {
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("브라우저 로그인 연결").font(.headline)
+                    Text(tr("Connect browser sign-in")).font(.headline)
                     if store.claudeLoginRetryable.contains(account.id) {
-                        Text("인증 코드는 처리되었습니다. 계정 연결 확인을 다시 시도해 주세요.")
+                        Text(tr("The code was processed. Retry account verification."))
                             .font(.caption).fixedSize(horizontal: false, vertical: true)
-                        Button("계정 연결 다시 확인") {
+                        Button(tr("Retry account verification")) {
                             Task { await store.completeClaudeLogin(account.id, code: "") }
                         }
                         .buttonStyle(.borderedProminent)
                         .keyboardShortcut(.defaultAction)
                         .disabled(store.busy.contains(account.id))
                     } else {
-                    Text("기본 브라우저에서 Google 또는 이메일로 로그인한 뒤 표시되는 인증 코드 전체를 붙여넣어 주세요.")
+                    Text(tr("Sign in with Google or email in your default browser, then paste the entire authorization code."))
                         .font(.caption).foregroundStyle(Palette.muted(scheme))
                         .fixedSize(horizontal: false, vertical: true)
-                    Text("인증 코드").font(.caption)
-                    SecureField("브라우저의 인증 코드 전체", text: $authorizationCode)
+                    Text(tr("Authorization code")).font(.caption)
+                    SecureField(tr("Entire code from the browser"), text: $authorizationCode)
                         .textFieldStyle(.roundedBorder)
-                    Button("붙여넣기") {
+                    Button(tr("Paste")) {
                         if let pasted = NSPasteboard.general.string(forType: .string) {
                             authorizationCode = pasted
                         }
                     }.keyboardShortcut("v", modifiers: .control)
-                    Button("인증 코드로 연결") {
+                    Button(tr("Connect with code")) {
                         let code = authorizationCode
                         authorizationCode = ""
                         Task { await store.completeClaudeLogin(account.id, code: code) }
@@ -420,17 +436,17 @@ struct AccountDetailView: View {
                 }
             }
             if store.busy.contains(account.id) {
-                Text("사용량 확인 중…").font(.caption).foregroundStyle(Palette.muted(scheme))
+                Text(tr("Checking usage…")).font(.caption).foregroundStyle(Palette.muted(scheme))
             }
             HStack {
-                Button(account.provider == .claude ? "브라우저 로그인…" : "로그인 열기…") { store.connect(account) }
+                Button(tr("Sign in…")) { store.connect(account) }
                     .disabled(store.isDemo || store.busy.contains(account.id))
                 if !store.claudeLoginPending.contains(account.id) {
-                    Button("연결 확인") { Task { await store.refresh(account.id) } }
+                    Button(tr("Check connection")) { Task { await store.refresh(account.id) } }
                         .disabled(store.isDemo || store.busy.contains(account.id))
                 }
                 Spacer()
-                Button("닫기") { dismiss() }.keyboardShortcut(.cancelAction)
+                Button(tr("Close")) { dismiss() }.keyboardShortcut(.cancelAction)
             }
         }.padding(24).frame(width: 320)
     }

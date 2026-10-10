@@ -52,22 +52,7 @@ public actor CodexClient {
             for (kind, window) in [("primary", bucket.primary), ("secondary", bucket.secondary)] {
                 guard let window else { continue }
                 if let minutes = window.windowDurationMins, minutes <= 0 { throw UsageError.invalidPayload }
-                let duration: String
-                if let minutes = window.windowDurationMins {
-                    if minutes == 10080 {
-                        duration = "주간"
-                    } else if minutes.isMultiple(of: 1440) {
-                        duration = "\(minutes / 1440)일"
-                    } else if minutes.isMultiple(of: 60) {
-                        duration = "\(minutes / 60)시간"
-                    } else if minutes > 60 {
-                        duration = "\(minutes / 60)시간 \(minutes % 60)분"
-                    } else {
-                        duration = "\(minutes)분"
-                    }
-                } else {
-                    duration = kind == "primary" ? "단기 한도" : "장기 한도"
-                }
+                let duration = UsageLimit.durationTitle(minutes: window.windowDurationMins, primary: kind == "primary")
                 limits.append(try UsageLimit(
                     id: "\(id)/\(kind)",
                     title: buckets.count > 1 ? "\(bucket.limitName ?? id) · \(duration)" : duration,

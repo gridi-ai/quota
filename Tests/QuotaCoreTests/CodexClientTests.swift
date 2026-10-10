@@ -19,7 +19,7 @@ struct CodexClientTests {
         #expect(snapshot.limits.map(\.id) == ["codex/primary", "codex/secondary"])
         #expect(snapshot.limits.map(\.usedPercent) == [25, 73])
         #expect(snapshot.limits.map(\.windowMinutes) == [300, 10080])
-        #expect(snapshot.limits.map(\.title) == ["5시간", "주간"])
+        #expect(snapshot.limits.map(\.title) == ["5 hours", "Weekly"])
         #expect(snapshot.limits.first?.resetsAt == Date(timeIntervalSince1970: 1_800_000_000))
         await client.shutdown()
     }
@@ -31,7 +31,7 @@ struct CodexClientTests {
         let snapshot = try await client.readUsage()
         #expect(snapshot.limits.map(\.id) == ["codex/primary", "codex/secondary", "review/primary"])
         #expect(snapshot.limits.map(\.usedPercent) == [40, 80, 12])
-        #expect(snapshot.limits.map(\.title) == ["Codex · 5시간", "Codex · 주간", "Review · 단기 한도"])
+        #expect(snapshot.limits.map(\.title) == ["Codex · 5 hours", "Codex · Weekly", "Review · Short-term limit"])
         await client.shutdown()
     }
 
@@ -40,7 +40,7 @@ struct CodexClientTests {
         defer { fixture.remove() }
         let client = fixture.client()
         let snapshot = try await client.readUsage()
-        #expect(snapshot.limits.map(\.title) == ["1시간 30분", "1일"])
+        #expect(snapshot.limits.map(\.title) == ["1 hour 30 minutes", "1 day"])
         await client.shutdown()
     }
 

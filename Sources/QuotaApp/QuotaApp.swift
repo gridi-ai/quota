@@ -24,6 +24,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
     private var statusSubscription: AnyCancellable?
     private var statusTimer: Timer?
     private var sizeSubscription: AnyCancellable?
+    private var languageSubscription: AnyCancellable?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         store = AppStore(demo: CommandLine.arguments.contains("--demo"))
@@ -35,7 +36,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
             styleMask: [.titled, .closable, .resizable, .utilityWindow],
             backing: .buffered, defer: false
         )
-        panel.title = "남은 사용량"
+        panel.title = tr("Remaining quota")
         panel.titleVisibility = .hidden
         panel.titlebarAppearsTransparent = true
         panel.isOpaque = true
@@ -47,6 +48,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
         panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
         panel.minSize = NSSize(width: 320, height: 240)
         let hostingView = NSHostingView(rootView: WidgetView(store: store))
+        // Window geometry is managed here; a zero-width minimum proposal wraps fixed-height text.
+        hostingView.sizingOptions.remove(.minSize)
         hostingView.wantsLayer = true
         hostingView.layer?.backgroundColor = NSColor.clear.cgColor
         hostingView.layer?.isOpaque = true
@@ -57,9 +60,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
         resizeForContent()
         store.onPinChanged = { [weak self] pinned in self?.panel.level = pinned ? .floating : .normal }
         store.onThemeChanged = { [weak self] theme in self?.applyTheme(theme) }
+        store.onSettingsRequested = { [weak self] in self?.showSettings() }
         panel.level = store.pinned ? .floating : .normal
         applyTheme(store.theme)
         makeMenus()
+        languageSubscription = store.$language.dropFirst().receive(on: RunLoop.main).sink { [weak self] _ in
+            guard let self else { return }
+            self.panel.title = tr("Remaining quota")
+            self.settingsWindow?.title = tr("Settings")
+            self.makeMenus()
+        }
         statusSubscription = Publishers.CombineLatest3(store.$ledger, store.$messages, store.$menuSelections)
             .receive(on: RunLoop.main)
             .sink { [weak self] _ in self?.updateStatus() }
@@ -70,15 +80,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
             store.$compact, store.$ledger.map { $0.accounts.count }.removeDuplicates()
         ).receive(on: RunLoop.main).sink { [weak self] _ in self?.resizeForContent() }
         showWindow()
+        if store.isDemo, CommandLine.arguments.contains("--demo-settings") { showSettings() }
     }
 
     private func resizeForContent() {
         let count = store.ledger.accounts.count
-        let contentHeight: CGFloat = count == 0 ? 260 :
+        let contentHeight: CGFloat = count == 0 ? 320 :
             store.compact ? CGFloat(min(440, 120 + count * 64)) : CGFloat(min(580, 160 + count * 130))
         let old = panel.frame
-        let chrome = old.height - panel.contentLayoutRect.height
-        let height = contentHeight + chrome
+        let height = panel.frameRect(forContentRect: NSRect(
+            x: 0, y: 0, width: old.width, height: contentHeight
+        )).height
+        panel.minSize = NSSize(width: 320, height: count == 0 ? height : 240)
         panel.setFrame(
             NSRect(x: old.minX, y: old.maxY - height, width: old.width, height: height),
             display: true
@@ -89,31 +102,33 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
         let root = NSMenuItem()
         menuBar.addItem(root)
         let menu = NSMenu()
-        menu.addItem(item("위젯 열기", action: #selector(showWindow), key: "0"))
-        menu.addItem(item("전체 새로고침", action: #selector(refresh), key: "r"))
-        menu.addItem(item("계정 추가…", action: #selector(addAccount), key: "n"))
-        menu.addItem(item("보기 전환", action: #selector(toggleCompact), key: "1"))
-        menu.addItem(item("항상 위에 표시 전환", action: #selector(togglePin), key: "p"))
-        menu.addItem(item("설정…", action: #selector(showSettings), key: ","))
+        menu.addItem(item(tr("Open widget"), action: #selector(showWindow), key: "0"))
+        menu.addItem(item(tr("Refresh all"), action: #selector(refresh), key: "r"))
+        menu.addItem(item(tr("Add account…"), action: #selector(addAccount), key: "n"))
+        menu.addItem(item(tr("Toggle compact view"), action: #selector(toggleCompact), key: "1"))
+        menu.addItem(item(tr("Toggle always on top"), action: #selector(togglePin), key: "p"))
+        menu.addItem(item(tr("Settings…"), action: #selector(showSettings), key: ","))
         menu.addItem(.separator())
-        menu.addItem(item("Quota 종료", action: #selector(quit), key: "q"))
+        menu.addItem(item(tr("Quit Quota"), action: #selector(quit), key: "q"))
         root.submenu = menu
-        let editRoot = NSMenuItem(title: "편집", action: nil, keyEquivalent: "")
-        let editMenu = NSMenu(title: "편집")
+        let editRoot = NSMenuItem(title: tr("Edit"), action: nil, keyEquivalent: "")
+        let editMenu = NSMenu(title: tr("Edit"))
         for (title, selector, key) in [
-            ("잘라내기", "cut:", "x"), ("복사", "copy:", "c"),
-            ("붙여넣기", "paste:", "v"), ("전체 선택", "selectAll:", "a")
+            ("Cut", "cut:", "x"), ("Copy", "copy:", "c"),
+            ("Paste", "paste:", "v"), ("Select all", "selectAll:", "a")
         ] {
-            editMenu.addItem(NSMenuItem(title: title, action: NSSelectorFromString(selector), keyEquivalent: key))
+            editMenu.addItem(NSMenuItem(title: tr(title), action: NSSelectorFromString(selector), keyEquivalent: key))
         }
-        let controlPaste = NSMenuItem(title: "붙여넣기 (Ctrl+V)", action: NSSelectorFromString("paste:"), keyEquivalent: "v")
+        let controlPaste = NSMenuItem(title: tr("Paste (Ctrl+V)"), action: NSSelectorFromString("paste:"), keyEquivalent: "v")
         controlPaste.keyEquivalentModifierMask = .control
         editMenu.addItem(controlPaste)
         editRoot.submenu = editMenu
         menuBar.addItem(editRoot)
         NSApp.mainMenu = menuBar
-        statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-        statusItem.button?.image = NSImage(systemSymbolName: "chart.bar.xaxis", accessibilityDescription: "Quota 사용량")
+        if statusItem == nil {
+            statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+        }
+        statusItem.button?.image = NSImage(systemSymbolName: "chart.bar.xaxis", accessibilityDescription: tr("Quota usage"))
         statusItem.button?.font = .monospacedDigitSystemFont(ofSize: 12, weight: .regular)
         let statusMenu = NSMenu()
         statusMenu.delegate = self
@@ -129,15 +144,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
             let value = metric.remainingPercent.map { "\(Int($0.rounded()))%" } ?? "—"
             return "\(provider) \(value)\(metric.isStale ? "*" : "")"
         }.joined(separator: " · ")
-        statusItem.button?.toolTip = metrics.isEmpty ? "계정을 연결하면 남은 사용량이 표시됩니다." :
+        statusItem.button?.toolTip = metrics.isEmpty ? tr("Connect an account to see remaining quota.") :
             metrics.compactMap { metric -> String? in
                 guard let account = store.ledger.accounts.first(where: { $0.id == metric.accountID }) else { return nil }
                 let limits = store.ledger.snapshots[account.id]?.limits.map {
-                    "\($0.title) \(Int($0.remainingPercent.rounded()))% 남음"
-                }.joined(separator: ", ") ?? "미조회"
-                return "\(account.provider.title) · \(account.alias): \(limits)\(metric.isStale ? " (마지막 관측값)" : "")"
+                    tr("%@: %d%% remaining", $0.localizedTitle, Int($0.remainingPercent.rounded()))
+                }.joined(separator: ", ") ?? tr("Not fetched")
+                return "\(account.provider.title) · \(account.alias): \(limits)\(metric.isStale ? " (" + tr("Last observed") + ")" : "")"
             }.joined(separator: "\n")
-        statusItem.button?.setAccessibilityLabel("계정별 남은 사용량")
+        statusItem.button?.setAccessibilityLabel(tr("Remaining quota per account"))
         statusItem.button?.setAccessibilityValue(statusItem.button?.title ?? "")
     }
 
@@ -146,17 +161,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
         menu.removeAllItems()
         for account in store.ledger.accounts {
             let limits = store.ledger.snapshots[account.id]?.limits.map {
-                "\($0.title) \(Int($0.remainingPercent.rounded()))%"
-            }.joined(separator: " · ") ?? "미조회"
+                "\($0.localizedTitle) \(Int($0.remainingPercent.rounded()))%"
+            }.joined(separator: " · ") ?? tr("Not fetched")
             let summary = NSMenuItem(title: "\(account.alias) · \(account.provider.title) · \(limits)", action: nil, keyEquivalent: "")
             summary.isEnabled = false
             menu.addItem(summary)
         }
         if !store.ledger.accounts.isEmpty { menu.addItem(.separator()) }
-        menu.addItem(item("위젯 열기", action: #selector(showWindow), key: "0"))
-        menu.addItem(item("전체 새로고침", action: #selector(refresh), key: "r"))
-        menu.addItem(item("계정 추가…", action: #selector(addAccount), key: "n"))
-        let selection = NSMenuItem(title: "메뉴 막대 표시 계정", action: nil, keyEquivalent: "")
+        menu.addItem(item(tr("Open widget"), action: #selector(showWindow), key: "0"))
+        menu.addItem(item(tr("Refresh all"), action: #selector(refresh), key: "r"))
+        menu.addItem(item(tr("Add account…"), action: #selector(addAccount), key: "n"))
+        let selection = NSMenuItem(title: tr("Menu bar accounts"), action: nil, keyEquivalent: "")
         let selectionMenu = NSMenu()
         let metrics = store.menuMetrics()
         for account in store.ledger.accounts {
@@ -168,9 +183,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
         selection.submenu = selectionMenu
         selection.isEnabled = !store.ledger.accounts.isEmpty
         menu.addItem(selection)
-        menu.addItem(item("설정…", action: #selector(showSettings), key: ","))
+        menu.addItem(item(tr("Settings…"), action: #selector(showSettings), key: ","))
         menu.addItem(.separator())
-        menu.addItem(item("Quota 종료", action: #selector(quit), key: "q"))
+        menu.addItem(item(tr("Quit Quota"), action: #selector(quit), key: "q"))
     }
 
     @objc private func selectMenuAccount(_ sender: NSMenuItem) {
@@ -209,10 +224,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
     @objc private func showSettings() {
         if settingsWindow == nil {
             let window = NSWindow(
-                contentRect: NSRect(x: 0, y: 0, width: 440, height: 270),
-                styleMask: [.titled, .closable], backing: .buffered, defer: false
+                contentRect: NSRect(x: 0, y: 0, width: 480, height: 620),
+                styleMask: [.titled, .closable, .resizable], backing: .buffered, defer: false
             )
-            window.title = "보기 및 연결 설정"
+            window.title = tr("Settings")
+            window.minSize = NSSize(width: 480, height: 380)
             window.isReleasedWhenClosed = false
             window.contentView = NSHostingView(rootView: SettingsView(store: store))
             window.center()
@@ -232,6 +248,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
         statusTimer?.invalidate()
         statusSubscription?.cancel()
         sizeSubscription?.cancel()
+        languageSubscription?.cancel()
         Task {
             await store.shutdown()
             sender.reply(toApplicationShouldTerminate: true)
@@ -244,17 +261,52 @@ struct SettingsView: View {
     @ObservedObject var store: AppStore
 
     var body: some View {
-        Form {
-            Toggle("항상 위에 표시", isOn: $store.pinned)
-            Toggle("컴팩트 보기", isOn: $store.compact)
-            Picker("테마", selection: $store.theme) {
-                Text("시스템").tag("system")
-                Text("페이퍼").tag("light")
-                Text("다크").tag("dark")
+        VStack(alignment: .leading, spacing: 16) {
+                Form {
+                    Section {
+                        Picker(tr("Language"), selection: $store.language) {
+                            Text(tr("System")).tag("system")
+                            Text("English").tag("en")
+                            Text("한국어").tag("ko")
+                        }
+                        Toggle(tr("Always on top"), isOn: $store.pinned)
+                        Toggle(tr("Compact view"), isOn: $store.compact)
+                        Picker(tr("Theme"), selection: $store.theme) {
+                            Text(tr("System")).tag("system")
+                            Text(tr("Paper")).tag("light")
+                            Text(tr("Dark")).tag("dark")
+                        }
+                        TextField(tr("Codex executable"), text: $store.codexPath)
+                        Text(tr("Usage refreshes every five minutes while the app runs, and after wake."))
+                            .font(.caption).foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true).textSelection(.enabled)
+                    }
+                    Section {
+                        Text(tr("Quota is free. No subscription or paid feature unlocks."))
+                            .fixedSize(horizontal: false, vertical: true).textSelection(.enabled)
+                        Link(destination: URL(string: "https://github.com/gridi-ai/quota/releases")!) {
+                            Label(tr("Install Quota for free"), systemImage: "arrow.down.circle")
+                        }
+                        Link(destination: URL(string: "https://ko-fi.com/gridi")!) {
+                            Label(tr("Buy the developer a coffee"), systemImage: "cup.and.saucer")
+                        }
+                        Text(tr("Optional support. All features stay free, whether or not you donate."))
+                            .font(.caption).foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true).textSelection(.enabled)
+                        Link(destination: URL(string: "https://github.com/gridi-ai/quota/issues")!) {
+                            Label(tr("Report a bug"), systemImage: "arrow.up.right.square")
+                        }
+                    } header: {
+                        Text(tr("Free installation & support"))
+                    }
+                }.formStyle(.grouped)
+            HStack {
+                Text("Quota \(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "dev")")
+                    .font(.caption).foregroundStyle(.secondary)
+                Spacer()
+                Button(tr("Close")) { NSApp.keyWindow?.close() }.keyboardShortcut(.cancelAction)
             }
-            TextField("Codex 실행 파일", text: $store.codexPath)
-            Text("사용량은 앱 실행 중 5분마다, 잠자기에서 깨어날 때 자동으로 갱신합니다.")
-                .font(.caption).foregroundStyle(.secondary)
-        }.padding(24).frame(width: 440)
+        }.padding(24).frame(minWidth: 432, maxWidth: .infinity, maxHeight: .infinity)
+            .environment(\.locale, appLocale)
     }
 }

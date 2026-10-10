@@ -21,11 +21,11 @@ public enum ClaudePayload {
             throw UsageError.invalidPayload
         }
         let definitions: [(String, String, Int)] = [
-            ("five_hour", "5시간", 300),
-            ("seven_day", "주간", 10080),
-            ("seven_day_sonnet", "Sonnet · 주간", 10080),
-            ("seven_day_opus", "Opus · 주간", 10080),
-            ("seven_day_cowork", "Cowork · 주간", 10080)
+            ("five_hour", "5 hours", 300),
+            ("seven_day", "Weekly", 10080),
+            ("seven_day_sonnet", "Sonnet · Weekly", 10080),
+            ("seven_day_opus", "Opus · Weekly", 10080),
+            ("seven_day_cowork", "Cowork · Weekly", 10080)
         ]
         let limits = try definitions.compactMap { key, title, minutes -> UsageLimit? in
             guard let window = envelope.usage[key] ?? nil, let used = window.utilization else { return nil }

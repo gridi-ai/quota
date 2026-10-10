@@ -4,7 +4,7 @@ public enum Provider: String, Codable, CaseIterable, Sendable {
     case codex
     case claude
 
-    public var title: String { self == .codex ? "Codex" : "Claude" }
+    public var title: String { L10n.text(self == .codex ? "Codex" : "Claude") }
 }
 
 public struct Account: Identifiable, Codable, Equatable, Sendable {
@@ -42,6 +42,52 @@ public struct UsageLimit: Identifiable, Codable, Equatable, Sendable {
     }
 
     public var remainingPercent: Double { 100 - usedPercent }
+
+    public var localizedTitle: String {
+        switch id {
+        case "five_hour": return L10n.text("5 hours")
+        case "seven_day": return L10n.text("Weekly")
+        case "seven_day_sonnet": return L10n.text("Sonnet · Weekly")
+        case "seven_day_opus": return L10n.text("Opus · Weekly")
+        case "seven_day_cowork": return L10n.text("Cowork · Weekly")
+        default:
+            let kind = id.split(separator: "/").last.map(String.init)
+            guard kind == "primary" || kind == "secondary" else { return L10n.text(title) }
+            let duration = Self.durationTitle(minutes: windowMinutes, primary: kind == "primary", localized: true)
+            // Preserve provider-supplied bucket names, replacing only the stored duration.
+            if let separator = title.range(of: " · ", options: .backwards) {
+                return "\(title[..<separator.lowerBound]) · \(duration)"
+            }
+            return duration
+        }
+    }
+
+    static func durationTitle(minutes: Int?, primary: Bool, localized: Bool = false) -> String {
+        let source: String
+        let values: [CVarArg]
+        if let minutes {
+            if minutes == 10080 {
+                source = "Weekly"
+                values = []
+            } else if minutes.isMultiple(of: 1440) {
+                source = minutes == 1440 ? "%ld day" : "%ld days"
+                values = [minutes / 1440]
+            } else if minutes.isMultiple(of: 60) {
+                source = minutes == 60 ? "%ld hour" : "%ld hours"
+                values = [minutes / 60]
+            } else if minutes > 60 {
+                source = "\(minutes / 60 == 1 ? "%ld hour" : "%ld hours") \(minutes % 60 == 1 ? "%ld minute" : "%ld minutes")"
+                values = [minutes / 60, minutes % 60]
+            } else {
+                source = minutes == 1 ? "%ld minute" : "%ld minutes"
+                values = [minutes]
+            }
+        } else {
+            source = primary ? "Short-term limit" : "Long-term limit"
+            values = []
+        }
+        return String(format: localized ? L10n.text(source) : source, arguments: values)
+    }
 }
 
 public struct UsageSnapshot: Codable, Equatable, Sendable {
@@ -79,12 +125,12 @@ public enum UsageError: Error, LocalizedError, Equatable, Sendable {
 
     public var errorDescription: String? {
         switch self {
-        case .notAuthenticated: "로그인이 필요합니다."
-        case .identityChanged: "연결된 계정이 달라졌습니다. 계정을 다시 연결해 주세요."
-        case .invalidPayload: "사용량 응답 형식을 확인할 수 없습니다."
-        case .timedOut: "조회 시간이 초과되었습니다."
-        case .missingCLI: "Codex CLI를 찾을 수 없습니다. 실행 파일 경로를 확인해 주세요."
-        case .providerMessage(let message): message
+        case .notAuthenticated: L10n.text("Login is required.")
+        case .identityChanged: L10n.text("The connected account has changed. Please reconnect the account.")
+        case .invalidPayload: L10n.text("The usage response format could not be verified.")
+        case .timedOut: L10n.text("The request timed out.")
+        case .missingCLI: L10n.text("Codex CLI could not be found. Please check the executable path.")
+        case .providerMessage(let message): L10n.text(message)
         }
     }
 }

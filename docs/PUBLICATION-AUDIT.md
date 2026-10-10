@@ -56,3 +56,21 @@ The ZIP contains only Quota.app's executable, manifest and signature files, not
 account data or build caches. Packaging omits resource forks and extended attributes.
 The code signature verifies, but it is ad-hoc: no Developer ID or notarization is
 claimed. SHA-256 accompanies the ZIP; checksums do not authenticate an Apple identity.
+
+## Bilingual free-install preview 0.1.1
+
+The next preview adds English/Korean resources, the native icon, optional Ko-fi
+support links, and a free-install experiment document. Authentication endpoints,
+scopes, credential ownership and account isolation remain unchanged.
+
+- Core verification: 43 Swift Testing tests passed with coverage enabled.
+- Native QA: empty, compact, expanded, settings, details, both connection forms
+  and authorization-code sheets checked in both languages and light/dark themes.
+- Shell syntax and ShellCheck passed for every distribution script.
+- Gitleaks found no leaks in the current local tree; the explicit publication
+  tree and downloadable archive are separately checked before upload.
+- Developer signing identities on this Mac: 0. This remains an ad-hoc,
+  non-notarized preview; notarization and App Store submission were not performed.
+
+Generated image concepts, native QA captures and debugging notes remain local.
+The final icon alone is included as an application resource.

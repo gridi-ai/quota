@@ -61,7 +61,7 @@ Mac App Store”가 표시되어 있다. 실제 출시·판매 증거로 취급�
 ### 약점
 
 - 무료 CodexBar·ClaudeBar가 기능·배포 성숙도에서 강하다.
-- 현재 UI가 한국어이며 배포 바이너리는 Apple Silicon만 지원한다.
+- UI는 한국어·영어를 지원하며 배포 바이너리는 Apple Silicon만 지원한다.
 - ad-hoc 서명·미공증이라 첫 설치에서 신뢰와 Gatekeeper 마찰이 생길 수 있다.
 - Codex CLI가 필요하고, Claude는 인증 코드를 직접 복사해 돌아와야 한다.
 - 자동 업데이트, 알림, 사용 기록·페이스 예측은 현재 제공하지 않는다.
@@ -81,10 +81,13 @@ client ID 자체는 credential이 아니지만 **secret이 없다는 사실과 �
 공식 승인되었다는 주장은 다르다.** 상용 앱에 대한 공식 승인·장기 호환성은
 확인되지 않았다.
 
-[Anthropic 개발자 안내](https://support.claude.com/en/articles/13189465-log-in-to-your-claude-account)는
-제3자 제품에 API-key 인증을 안내한다. API 사용량은 Pro/Max 구독 한도와 다르다.
-조회 전용 트래커가 금지됐다고 단정할 근거로 삼지는 않되, 유료 판매 전에
-정식 연동 가능 범위를 확인해야 하는 구체적 제약이다.
+[Anthropic의 현재 인증 규정](https://code.claude.com/docs/en/legal-and-compliance#authentication-and-credential-use)은
+제3자 앱의 Claude.ai 로그인 제공과 credentials/session tokens 수집·저장·중개를
+명시적으로 제한한다. 조회 전용 트래커에 대한 별도 허용은 확인되지 않았다.
+이전의 단순한 “API 호환성 불확실” 평가보다 구체적인 제약이다.
+공식 status-line 전환 또는 명시적인 조회 연동 허용을 먼저 검토해야 한다.
+API-key 사용량은 Pro/Max 구독 한도를 대체하지 않는다.
+자세한 전환·배포 실험은 [EXPERIMENT.md](EXPERIMENT.md)에 있다.
 
 [공식 Claude status-line rate_limits](https://code.claude.com/docs/en/statusline#rate-limit-usage)
 를 읽는 [AI Usage Tracker](https://github.com/athiriot/ai-usage-tracker) 같은 대안도
@@ -98,7 +101,8 @@ client ID 자체는 credential이 아니지만 **secret이 없다는 사실과 �
 ## 일회 판매·후원 모델
 
 **추천 시작점: 무료 베타 + 선택적 $5 후원.** 이는 가격 실험이지 예상 수익이
-아니다. 현재 결제 계정·후원 링크는 생성하지 않았다.
+아니다. 사용자가 확정한 [Ko-fi 후원 링크](https://ko-fi.com/gridi)를 연결했으며,
+새 결제 계정이나 결제 상품을 생성하지 않았다.
 
 후원으로 실제 지불과 사용 유지가 확인되고 설치·연결 문제가 줄면,
 서명·공증된 편의 배포판을 **$4.99 일회 구매**로 실험할 수 있다.
@@ -119,7 +123,7 @@ App Store는 별도 검토 대상으로 두는 편이 현실적이다.
 
 ## 작은 검증 실험
 
-다중 계정 사용자 10명에게 2주 베타를 제안하는 것을 첫 가설로 삼는다.
+다중 계정 사용자 20명(한국어 10명·영어 10명)에게 2주 베타를 제안한다.
 수치는 실험 설계이며 이미 확보한 고객이나 수요가 아니다.
 
 1. CodexBar·ClaudeBar와 비교해 어느 앱을 계속 켜두는지 관찰한다.

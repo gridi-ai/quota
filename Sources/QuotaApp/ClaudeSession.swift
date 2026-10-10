@@ -32,7 +32,7 @@ final class ClaudeSession {
     func showLogin() throws {
         let next = try ClaudeOAuthFlow()
         guard NSWorkspace.shared.open(try next.authorizationURL()) else {
-            throw UsageError.providerMessage("기본 브라우저를 열 수 없습니다.")
+            throw UsageError.providerMessage(tr("Cannot open the default browser."))
         }
         flow = next
         pendingTokens = nil
@@ -42,7 +42,7 @@ final class ClaudeSession {
 
     func completeLogin(code: String, expectedIdentity: String?) async throws -> UsageSnapshot {
         guard let flow else {
-            throw UsageError.providerMessage("브라우저 로그인부터 다시 시작해 주세요.")
+            throw UsageError.providerMessage(tr("Start browser sign-in again."))
         }
         let tokens: ClaudeOAuthTokens
         if let pendingTokens { tokens = pendingTokens }
@@ -98,7 +98,7 @@ final class ClaudeSession {
         let status = SecItemCopyMatching(query as CFDictionary, &value)
         if status == errSecItemNotFound { throw UsageError.notAuthenticated }
         guard status == errSecSuccess, let data = value as? Data else {
-            throw UsageError.providerMessage("Claude 인증 정보를 Keychain에서 읽을 수 없습니다 (\(status)).")
+            throw UsageError.providerMessage(tr("Cannot read Claude credentials from Keychain (%d).", status))
         }
         do { return try JSONDecoder().decode(ClaudeOAuthTokens.self, from: data) }
         catch { throw UsageError.invalidPayload }
@@ -118,7 +118,7 @@ final class ClaudeSession {
             status = SecItemAdd(item as CFDictionary, nil)
         }
         guard status == errSecSuccess else {
-            throw UsageError.providerMessage("Claude 인증 정보를 Keychain에 저장할 수 없습니다 (\(status)).")
+            throw UsageError.providerMessage(tr("Cannot save Claude credentials to Keychain (%d).", status))
         }
     }
 }

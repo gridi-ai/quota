@@ -6,6 +6,7 @@ dist/
 .claude/
 .claude.json
 graphify-out/
+generated-images/
 .env
 .env.*
 *.pem

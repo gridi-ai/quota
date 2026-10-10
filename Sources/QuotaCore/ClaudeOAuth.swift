@@ -12,7 +12,7 @@ public struct ClaudeOAuthFlow: Sendable {
         func randomValue() throws -> String {
             var bytes = [UInt8](repeating: 0, count: 32)
             guard SecRandomCopyBytes(kSecRandomDefault, bytes.count, &bytes) == errSecSuccess else {
-                throw UsageError.providerMessage("인증 요청을 생성할 수 없습니다.")
+                throw UsageError.providerMessage("Could not create an authentication request.")
             }
             return Self.base64URL(Data(bytes))
         }
@@ -45,7 +45,7 @@ public struct ClaudeOAuthFlow: Sendable {
         let parts = pasted.trimmingCharacters(in: .whitespacesAndNewlines)
             .split(separator: "#", omittingEmptySubsequences: false)
         guard parts.count == 2, !parts[0].isEmpty, parts[1] == state else {
-            throw UsageError.providerMessage("이 로그인 요청의 인증 코드 전체를 복사해 주세요. 다른 요청의 코드는 사용할 수 없습니다.")
+            throw UsageError.providerMessage("Please copy the entire authorization code for this login request. Codes from other requests cannot be used.")
         }
         return String(parts[0])
     }
@@ -104,7 +104,7 @@ public struct ClaudeOAuthClient: Sendable {
 
     public func readProfile(_ tokens: ClaudeOAuthTokens) async throws -> Data {
         guard tokens.scopes.contains("user:profile") else {
-            throw UsageError.providerMessage("사용량 조회 권한이 없습니다. 브라우저에서 다시 연결해 주세요.")
+            throw UsageError.providerMessage("Usage access is not authorized. Please reconnect in the browser.")
         }
         return try await request("https://api.anthropic.com/api/oauth/profile", bearer: tokens.accessToken)
     }
@@ -124,17 +124,17 @@ public struct ClaudeOAuthClient: Sendable {
                 throw UsageError.invalidPayload
             }
             profile = value
-        } catch { throw UsageError.providerMessage("Claude 계정 프로필 응답이 올바른 JSON이 아닙니다.") }
+        } catch { throw UsageError.providerMessage("The Claude account profile response is not valid JSON.") }
         let account = profile["account"] as? [String: Any] ?? [:]
         let organization = profile["organization"] as? [String: Any] ?? [:]
         let email = (account["email_address"] ?? account["email"] ?? account["emailAddress"] ??
                      profile["email_address"] ?? profile["emailAddress"] ?? profile["email"]) as? String
         let organizationID = (organization["uuid"] ?? profile["organization_uuid"] ?? profile["organizationUuid"]) as? String
         guard let email, !email.isEmpty else {
-            throw UsageError.providerMessage("Claude 계정 프로필 응답에 이메일 식별자가 없습니다.")
+            throw UsageError.providerMessage("The Claude account profile response is missing an email identifier.")
         }
         guard let organizationID, !organizationID.isEmpty else {
-            throw UsageError.providerMessage("Claude 계정 프로필 응답에 조직 식별자가 없습니다.")
+            throw UsageError.providerMessage("The Claude account profile response is missing an organization identifier.")
         }
         return UsageSnapshot(
             identity: email + ":" + organizationID, displayIdentity: email,
@@ -151,7 +151,7 @@ public struct ClaudeOAuthClient: Sendable {
                 throw UsageError.invalidPayload
             }
             windows = value
-        } catch { throw UsageError.providerMessage("Claude 사용량 응답이 올바른 JSON이 아닙니다.") }
+        } catch { throw UsageError.providerMessage("The Claude usage response is not valid JSON.") }
         let windowKeys: Set<String> = [
             "five_hour", "seven_day", "seven_day_sonnet", "seven_day_opus", "seven_day_cowork"
         ]
@@ -160,7 +160,7 @@ public struct ClaudeOAuthClient: Sendable {
             "usage": windows.filter { windowKeys.contains($0.key) }
         ])
         do { return try ClaudePayload.parse(envelope, observedAt: observedAt) }
-        catch { throw UsageError.providerMessage("Claude 사용량 한도 응답 형식을 확인할 수 없습니다.") }
+        catch { throw UsageError.providerMessage("The Claude usage limit response format could not be verified.") }
     }
 
     private struct TokenResponse: Decodable {
@@ -173,18 +173,18 @@ public struct ClaudeOAuthClient: Sendable {
     private func tokens(from data: Data, previous: ClaudeOAuthTokens?, now: Date) throws -> ClaudeOAuthTokens {
         let response: TokenResponse
         do { response = try JSONDecoder().decode(TokenResponse.self, from: data) }
-        catch { throw UsageError.providerMessage("Claude 인증 토큰 응답 형식을 확인할 수 없습니다.") }
+        catch { throw UsageError.providerMessage("The Claude authentication token response format could not be verified.") }
         let refresh = response.refresh_token ?? previous?.refreshToken ?? ""
         let scopes = response.scope?.split(separator: " ").map(String.init) ?? previous?.scopes ?? ["user:profile"]
         guard !response.access_token.isEmpty else {
-            throw UsageError.providerMessage("Claude 인증 응답에 액세스 토큰이 없습니다.")
+            throw UsageError.providerMessage("The Claude authentication response is missing an access token.")
         }
         guard !refresh.isEmpty else {
-            throw UsageError.providerMessage("Claude 인증 응답에 갱신 토큰이 없습니다.")
+            throw UsageError.providerMessage("The Claude authentication response is missing a refresh token.")
         }
         guard response.expires_in.isFinite, response.expires_in > 0,
               scopes.contains("user:profile") else {
-            throw UsageError.providerMessage("Claude 인증 응답의 만료 시각 또는 조회 권한이 올바르지 않습니다.")
+            throw UsageError.providerMessage("The Claude authentication response has an invalid expiration time or usage permission.")
         }
         return ClaudeOAuthTokens(
             accessToken: response.access_token, refreshToken: refresh,
@@ -211,8 +211,11 @@ public struct ClaudeOAuthClient: Sendable {
         switch response.statusCode {
         case 200: return data
         case 401: throw UsageError.notAuthenticated
-        case 429: throw UsageError.providerMessage("Claude 조회 한도에 도달했습니다. 다음 갱신을 기다려 주세요.")
-        default: throw UsageError.providerMessage("Claude 인증 또는 조회 실패 (HTTP \(response.statusCode)). 브라우저에서 다시 연결해 주세요.")
+        case 429: throw UsageError.providerMessage("The Claude request limit has been reached. Please wait for the next refresh.")
+        default: throw UsageError.providerMessage(String(
+            format: L10n.text("Claude authentication or usage request failed (HTTP %ld). Please reconnect in the browser."),
+            response.statusCode
+        ))
         }
     }
 
