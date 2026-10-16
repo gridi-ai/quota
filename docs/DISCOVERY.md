@@ -31,6 +31,25 @@ Google 앱 rich result 자격이나 노출이 보장되는 것은 아니다.
 main에서 수동 실행하고 `publish=true`를 명시한 경우에만 배포한다.
 README와 저장소 homepage도 실제 공개 주소에 연결한다.
 
+## Search Console·GA4 연결
+
+사용자가 제공한 Search Console 토큰을 두 언어 페이지의
+`google-site-verification` 메타태그에 넣고, 웹 스트림 `G-F6CXXVY4FY`에
+Google tag와 공유 `assets/analytics.js`를 연결했다. 이 값들은 클라이언트에
+노출되는 식별자이며 계정 비밀번호나 서비스 계정 키가 아니다.
+
+웹사이트는 GA4와 분석 쿠키로 방문 통계를 수집한다. Google signals와 광고 개인화는
+config에서 비활성화했다. Mac 앱의 인증·계정 저장·분석 수집 여부는 변경하지 않았다.
+스트림의 향상된 측정 설정에 따라 외부 GitHub 링크 클릭을 측정할 수 있지만,
+클릭을 앱 설치 완료로 해석하지 않는다. 태그 배포·네트워크 요청 검증은 GA 보고서
+수신이나 Search Console의 소유권 승인과도 별개다.
+
+제공된 `google-site-verification=...` 표기는 DNS TXT 방식에서 쓰인다.
+공유 `github.io` 호스트의 DNS는 수정하지 않는다. URL-prefix 속성
+`https://gridi-ai.github.io/quota/`의 HTML 태그 인증용 값이 맞는지 사용자가
+Search Console에서 확인해야 한다. Domain 속성의 DNS 인증을 메타태그가
+대신한다고 주장하지 않는다.
+
 ## 근거
 
 - [Google AI features](https://developers.google.com/search/docs/appearance/ai-features):
@@ -134,12 +153,14 @@ AI 인용은 날짜·제품·언어·질문·인용 URL을 같은 조건으로 �
 답변에 안 나오는 것과 크롤링 실패는 다르며 검색 개인화·변동성도 기록한다.
 Search Console의 Web 합계를 AI 인용 전용 지표라고 부르지 않는다.
 GitHub 다운로드 수는 중복을 포함하고 고유 사용자나 설치 완료를 뜻하지 않는다.
-GitHub Pages에 서버 로그 분석이 있다고 가정하지 않는다. 웹·앱 telemetry나 쿠키는
-추가하지 않았으므로 자동 유입→설치 attribution은 현재 측정하지 못한다.
+GitHub Pages에 서버 로그 분석이 있다고 가정하지 않는다. 초기 게시에는 웹·앱
+분석이 없었으며 이후 사용자 요청으로 웹사이트에만 GA4를 추가했다.
+외부 링크 클릭 이후의 GitHub 다운로드·앱 설치까지 이어지는 자동 attribution은
+현재 측정하지 못한다.
 
 ## 로컬 검증 기록
 
-- 실제 Chrome에 Playwright로 CDP 연결 후 Lighthouse Node API로 측정했다.
+- GA4 추가 전 baseline은 실제 Chrome에 Playwright로 CDP 연결 후 Lighthouse Node API로 측정했다.
   영어·한국어 각각 mobile/desktop 3회, 총 12회에서 네 범주의 중앙값은 모두
   Performance/Accessibility/Best Practices/SEO **100/100/100/100**이었다.
   배포 URL이나 검색 순위의 점수가 아니라 로컬 production artifact 측정값이다.
@@ -151,7 +172,9 @@ GitHub Pages에 서버 로그 분석이 있다고 가정하지 않는다. 웹·�
   재현해 전체 문서 reflow를 확인했다. 브라우저 toolbar 확대 단축키를 실행한 결과나
   viewport가 달라지지 않는 CSS `zoom:2` 결과라고 부르지 않는다.
 - metadata/canonical/hreflang/schema/버전·가격/이미지·로컬 링크·anchor/sitemap 및
-  공개 허용 파일 6개를 검사한다. 다른 파일이 섞인 artifact는 배포 전에 거부한다.
+  공개 허용 파일을 검사한다. GA4 initializer를 포함해 현재 7개이며 다른 파일이
+  섞인 artifact는 배포 전에 거부한다. 실행 스크립트도 지정된 Google tag URL과
+  로컬 initializer 두 개만 허용하며 임의 외부 JS를 허용하지 않는다.
 - ShellCheck·shell 문법과 workflow YAML 구문 검사를 수행했다.
   이 환경에는 HTML/CSS/Python/YAML language server가 없어 LSP 진단은 실행하지
   못했다. 브라우저·실제 검사 도구의 결과를 그 대신 LSP 결과라고 부르지 않는다.

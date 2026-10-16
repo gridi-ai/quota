@@ -5,6 +5,7 @@ from html.parser import HTMLParser
 import json
 from pathlib import Path
 import plistlib
+import re
 import sys
 from typing import Final
 from urllib.parse import unquote, urljoin, urlsplit
@@ -13,6 +14,9 @@ from xml.etree import ElementTree
 
 BASE: Final = "https://gridi-ai.github.io/quota/"
 PAGES: Final = {"en": "index.html", "ko": "ko/index.html"}
+VERIFICATION: Final = "JxAD8O8E1KHsCHm8u0fxhPfO-e3sYyT6LqvX9YQL2mc"
+MEASUREMENT: Final = "G-F6CXXVY4FY"
+GOOGLE_TAG: Final = f"https://www.googletagmanager.com/gtag/js?id={MEASUREMENT}"
 
 
 @dataclass
@@ -57,11 +61,19 @@ class Page(HTMLParser):
 def main() -> None:
     root = Path(sys.argv[1]).resolve()
     repo = Path(__file__).resolve().parent.parent
-    allowed = {"index.html", "ko/index.html", "assets/style.css", "assets/icon.png",
+    allowed = {"index.html", "ko/index.html", "assets/style.css", "assets/icon.png", "assets/analytics.js",
                "sitemap.xml", ".nojekyll"}
     published = {path.relative_to(root).as_posix() for path in root.rglob("*") if path.is_file()}
     if published != allowed:
         raise SiteError(root, f"publication allowlist mismatch: {published ^ allowed}")
+    initializer = root / "assets/analytics.js"
+    settings = initializer.read_text(encoding="utf-8")
+    measurements = re.findall(r'window\.gtag\("config",\s*"([^"]+)"', settings)
+    if measurements != [MEASUREMENT]:
+        raise SiteError(initializer, "GA4 initializer measurement ID mismatch")
+    for setting in ("allow_google_signals", "allow_ad_personalization_signals"):
+        if not re.search(rf"\b{setting}\s*:\s*false\b", settings):
+            raise SiteError(initializer, f"GA4 privacy setting missing: {setting}")
     with (repo / "Resources/Info.plist").open("rb") as manifest:
         version = plistlib.load(manifest)["CFBundleShortVersionString"]
     expected = {"en": BASE, "ko": BASE + "ko/", "x-default": BASE}
@@ -81,6 +93,8 @@ def main() -> None:
             "twitter:card", "twitter:title", "twitter:description", "twitter:image",
         )), "missing discovery metadata")
         page.require(metadata.get("og:url") == canonical, "Open Graph URL mismatch")
+        page.require(metadata.get("google-site-verification") == VERIFICATION,
+                     "Search Console verification token mismatch")
         page.require("noindex" not in (metadata.get("robots") or "").lower(), "page is noindex")
         canonicals = [attrs.get("href") for tag, attrs in page.elements
                       if tag == "link" and attrs.get("rel") == "canonical"]
@@ -88,8 +102,13 @@ def main() -> None:
         alternates = {attrs.get("hreflang"): attrs.get("href") for tag, attrs in page.elements
                       if tag == "link" and attrs.get("rel") == "alternate"}
         page.require(alternates == expected, "alternate language URLs are not reciprocal")
-        page.require(all(attrs.get("type") == "application/ld+json"
-                         for tag, attrs in page.elements if tag == "script"), "unexpected runtime script")
+        scripts = [attrs for tag, attrs in page.elements
+                   if tag == "script" and attrs.get("type") != "application/ld+json"]
+        page.require(len(scripts) == 2, "need only the Google tag and local analytics initializer")
+        page.require(scripts[0].get("src") == GOOGLE_TAG and "async" in scripts[0],
+                     "unexpected external script")
+        page.require(urljoin(canonical, scripts[1].get("src") or "") == BASE + "assets/analytics.js"
+                     and "defer" in scripts[1], "unexpected analytics initializer")
         data = json.loads("".join(page.structured))
         page.require(data["@context"] == "https://schema.org"
                      and data["@type"] == "SoftwareApplication", "wrong structured data type")

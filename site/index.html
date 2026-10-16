@@ -3,6 +3,9 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="google-site-verification" content="JxAD8O8E1KHsCHm8u0fxhPfO-e3sYyT6LqvX9YQL2mc">
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-F6CXXVY4FY"></script>
+  <script defer src="assets/analytics.js"></script>
   <title>Quota — Claude &amp; Codex usage tracker for Mac</title>
   <meta name="description" content="Track remaining Claude and Codex subscription quota across accounts in a small native Mac widget and menu bar. Free, English/Korean, macOS 14+. Experimental preview.">
   <link rel="canonical" href="https://gridi-ai.github.io/quota/">
@@ -63,11 +66,11 @@
     <details open><summary>Does Quota track API costs or subscription quota?</summary><p>Subscription quota: remaining percentages and reset times returned for your Claude or ChatGPT/Codex account. It does not estimate API billing, buy more quota or make model requests to measure usage.</p></details>
     <details><summary>Can I track multiple Claude and Codex accounts?</summary><p>Yes. Each account has a separate identity and snapshot. Codex uses a distinct profile for each account. Claude uses a separate authorization. Two Codex accounts and one Claude account were live-tested; second-Claude isolation and a complete token-expiry cycle remain extended checks.</p></details>
     <details><summary>Do I need to keep a CLI or browser open?</summary><p>Codex requires its CLI, which Quota starts as a local app-server helper. The current experimental Claude integration does not require a running browser or Claude CLI after pairing. A future status-line alternative would depend on Claude Code activity and could not independently refresh inactive accounts.</p></details>
-    <details><summary>Where are my credentials stored?</summary><p>Claude tokens use account-specific macOS Keychain entries. Codex owns credentials in each selected profile. Account metadata and last-known quota stay on your Mac. There is no Quota backend or analytics. Removing a row does not revoke provider grants or erase credentials; see the <a href="https://github.com/gridi-ai/quota#controls-and-privacy">privacy and removal guide</a>.</p></details>
+    <details><summary>Where are my credentials stored?</summary><p>Claude tokens use account-specific macOS Keychain entries. Codex owns credentials in each selected profile. Account metadata and last-known quota stay on your Mac. The Mac app has no Quota backend or analytics; this website uses Google Analytics as described below. Removing a row does not revoke provider grants or erase credentials; see the <a href="https://github.com/gridi-ai/quota#controls-and-privacy">privacy and removal guide</a>.</p></details>
     <details><summary>Is Quota free? What does coffee support unlock?</summary><p>Every feature is free, with no subscription or account cap. <a href="https://ko-fi.com/gridi">Buying the developer a coffee</a> is optional and unlocks nothing. The source is MIT licensed.</p></details>
     <details><summary>Is this an App Store or notarized release?</summary><p>No. This is an ad-hoc signed community preview, not Apple-notarized or submitted to the App Store. A store edition would need separate sandbox, helper and service-permission verification.</p></details>
   </section>
 </main>
-<footer class="wrap"><nav aria-label="Project links"><a href="https://github.com/gridi-ai/quota">GitHub source</a><a href="https://github.com/gridi-ai/quota/issues">Report an issue</a><a href="https://ko-fi.com/gridi">Buy a coffee</a><a href="ko/" lang="ko" hreflang="ko">한국어 안내</a></nav><p class="small">Quota by gridi-ai. Independent community software; not affiliated with OpenAI or Anthropic. No tracking scripts on this page.</p></footer>
+<footer class="wrap"><nav aria-label="Project links"><a href="https://github.com/gridi-ai/quota">GitHub source</a><a href="https://github.com/gridi-ai/quota/issues">Report an issue</a><a href="https://ko-fi.com/gridi">Buy a coffee</a><a href="ko/" lang="ko" hreflang="ko">한국어 안내</a></nav><p class="small">Quota by gridi-ai. Independent community software; not affiliated with OpenAI or Anthropic.</p><p class="small">This website uses Google Analytics 4 and analytics cookies for visitor statistics. Google signals and ad personalization are disabled. The Mac app does not collect analytics. <a href="https://policies.google.com/privacy">Google Privacy Policy</a> · <a href="https://tools.google.com/dlpage/gaoptout">Analytics opt-out</a>.</p></footer>
 </body>
 </html>

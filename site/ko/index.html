@@ -3,6 +3,9 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="google-site-verification" content="JxAD8O8E1KHsCHm8u0fxhPfO-e3sYyT6LqvX9YQL2mc">
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-F6CXXVY4FY"></script>
+  <script defer src="../assets/analytics.js"></script>
   <title>Quota — Mac용 Claude·Codex 사용량 확인 앱</title>
   <meta name="description" content="개인·업무용 Claude와 Codex 구독 계정의 남은 한도와 초기화 시간을 작은 Mac 위젯과 메뉴 막대에서 확인하세요. 한국어·영어 지원, 무료, macOS 14 이상. 실험적 미공증 프리뷰입니다.">
   <link rel="canonical" href="https://gridi-ai.github.io/quota/ko/">
@@ -39,11 +42,11 @@
     <details open><summary>API 비용과 무엇이 다른가요?</summary><p>Claude·ChatGPT/Codex 구독 계정이 반환하는 남은 한도와 초기화 시간을 보여줍니다. API 비용을 추정하거나, 한도를 구매하거나, 모델을 호출해 사용량을 측정하지 않습니다.</p></details>
     <details><summary>여러 계정도 지원하나요?</summary><p>네. 계정별 식별자와 마지막 사용량을 분리합니다. Codex는 각각 다른 프로필, Claude는 각각 별도 인증을 사용합니다. 실제 조회는 Codex 두 계정과 Claude 한 계정까지 확인했으며 두 번째 Claude 계정 격리와 전체 토큰 만료 회전은 추가 검증 영역입니다.</p></details>
     <details><summary>브라우저나 CLI를 계속 켜둬야 하나요?</summary><p>Codex CLI는 필요하며 Quota가 로컬 app-server helper로 실행합니다. 현재 실험적 Claude 연동은 연결 후 브라우저나 Claude CLI를 켜둘 필요가 없습니다. 제안된 공식 status-line 대안은 Claude Code 활동에 의존하므로 비활성 계정을 독립 갱신하지 못합니다.</p></details>
-    <details><summary>계정과 인증 정보는 어디에 저장되나요?</summary><p>Claude 토큰은 계정별 macOS Keychain 항목에, Codex 인증은 지정한 CLI 프로필에 저장합니다. 계정 메타데이터와 마지막 사용량은 Mac에 남습니다. Quota 서버나 분석 추적은 없습니다. 목록에서 제거해도 제공자 권한·인증정보가 삭제되지는 않습니다. <a href="https://github.com/gridi-ai/quota/blob/main/README.ko.md#개인정보">개인정보·연결 해제 안내</a>를 확인하세요.</p></details>
+    <details><summary>계정과 인증 정보는 어디에 저장되나요?</summary><p>Claude 토큰은 계정별 macOS Keychain 항목에, Codex 인증은 지정한 CLI 프로필에 저장합니다. 계정 메타데이터와 마지막 사용량은 Mac에 남습니다. Mac 앱에는 Quota 서버나 분석 추적이 없으며 웹사이트는 아래 안내처럼 Google Analytics를 사용합니다. 목록에서 제거해도 제공자 권한·인증정보가 삭제되지는 않습니다. <a href="https://github.com/gridi-ai/quota/blob/main/README.ko.md#개인정보">개인정보·연결 해제 안내</a>를 확인하세요.</p></details>
     <details><summary>무료인가요? 커피 후원으로 무엇이 열리나요?</summary><p>모든 기능이 무료이며 구독료나 계정 수 제한이 없습니다. <a href="https://ko-fi.com/gridi">개발자에게 커피 사주기</a>는 선택 사항이고 추가 기능을 열지 않습니다. 소스는 MIT 라이선스입니다.</p></details>
     <details><summary>App Store 앱이거나 Apple 공증을 받았나요?</summary><p>아니요. ad-hoc 서명한 커뮤니티 프리뷰이며 Apple 공증이나 App Store 심사 제출은 하지 않았습니다. 스토어판은 sandbox·helper·제공자 연동 허용을 별도로 검증해야 합니다.</p></details>
   </section>
 </main>
-<footer class="wrap"><nav aria-label="프로젝트 링크"><a href="https://github.com/gridi-ai/quota">GitHub 소스</a><a href="https://github.com/gridi-ai/quota/issues">문제 신고</a><a href="https://ko-fi.com/gridi">커피 사주기</a><a href="../" lang="en" hreflang="en">English guide</a></nav><p class="small">gridi-ai가 만드는 Quota. OpenAI·Anthropic과 제휴하지 않은 독립 커뮤니티 소프트웨어입니다. 이 페이지에는 추적 스크립트가 없습니다.</p></footer>
+<footer class="wrap"><nav aria-label="프로젝트 링크"><a href="https://github.com/gridi-ai/quota">GitHub 소스</a><a href="https://github.com/gridi-ai/quota/issues">문제 신고</a><a href="https://ko-fi.com/gridi">커피 사주기</a><a href="../" lang="en" hreflang="en">English guide</a></nav><p class="small">gridi-ai가 만드는 Quota. OpenAI·Anthropic과 제휴하지 않은 독립 커뮤니티 소프트웨어입니다.</p><p class="small">이 웹사이트는 Google Analytics 4와 분석 쿠키로 방문 통계를 수집합니다. Google signals와 광고 개인화는 꺼두었습니다. Mac 앱에는 분석 추적이 없습니다. <a href="https://policies.google.com/privacy?hl=ko">Google 개인정보처리방침</a> · <a href="https://tools.google.com/dlpage/gaoptout?hl=ko">Analytics 수집&nbsp;거부</a>.</p></footer>
 </body>
 </html>
