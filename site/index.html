@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Quota — Claude &amp; Codex usage tracker for Mac</title>
+  <meta name="description" content="Track remaining Claude and Codex subscription quota across accounts in a small native Mac widget and menu bar. Free, English/Korean, macOS 14+. Experimental preview.">
+  <link rel="canonical" href="https://gridi-ai.github.io/quota/">
+  <link rel="alternate" hreflang="en" href="https://gridi-ai.github.io/quota/">
+  <link rel="alternate" hreflang="ko" href="https://gridi-ai.github.io/quota/ko/">
+  <link rel="alternate" hreflang="x-default" href="https://gridi-ai.github.io/quota/">
+  <link rel="stylesheet" href="assets/style.css">
+  <link rel="icon" type="image/png" href="assets/icon.png">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Quota — Claude &amp; Codex usage tracker for Mac">
+  <meta property="og:description" content="A free native Mac widget for separate accounts, remaining quota and reset times. Experimental preview.">
+  <meta property="og:url" content="https://gridi-ai.github.io/quota/">
+  <meta property="og:image" content="https://gridi-ai.github.io/quota/assets/icon.png">
+  <meta property="og:image:alt" content="Quota app icon with two green quota bars and a pin">
+  <meta property="og:locale" content="en_US">
+  <meta property="og:locale:alternate" content="ko_KR">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Quota — Claude &amp; Codex usage tracker for Mac">
+  <meta name="twitter:description" content="Free native Mac quota widget. Multiple accounts, English/Korean. Experimental preview.">
+  <meta name="twitter:image" content="https://gridi-ai.github.io/quota/assets/icon.png">
+  <script type="application/ld+json">
+  {"@context":"https://schema.org","@type":"SoftwareApplication","@id":"https://gridi-ai.github.io/quota/#app","name":"Quota","url":"https://gridi-ai.github.io/quota/","description":"Free native Mac widget and menu bar for remaining Claude and Codex subscription quota across separate accounts. Experimental preview.","applicationCategory":"DeveloperApplication","operatingSystem":"macOS 14 or later","softwareVersion":"0.1.1","inLanguage":["en","ko"],"isAccessibleForFree":true,"license":"https://github.com/gridi-ai/quota/blob/main/LICENSE","downloadUrl":"https://github.com/gridi-ai/quota/releases/tag/v0.1.1","image":"https://gridi-ai.github.io/quota/assets/icon.png","publisher":{"@type":"Organization","name":"gridi-ai","url":"https://github.com/gridi-ai"},"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}
+  </script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="wrap">
+  <a class="brand" href="./" aria-label="Quota home">Quota</a>
+  <nav aria-label="Main navigation"><a href="#install">Install</a><a href="#questions">Questions</a><a href="https://github.com/gridi-ai/quota">Source</a><a href="ko/" lang="ko" hreflang="ko">한국어</a></nav>
+</header>
+<main id="main" class="wrap">
+  <div class="hero">
+    <div>
+      <p class="eyebrow">Free native macOS app · by gridi-ai</p>
+      <h1>Claude &amp; Codex<br>usage for Mac.</h1>
+      <p class="lede">Your accounts. Their remaining quota.<br>A small window beside your editor.</p>
+      <p>Quota tracks subscription limits and reset times across personal and work accounts, in a pinnable widget and your menu bar.</p>
+      <div class="actions"><a class="button" href="https://github.com/gridi-ai/quota/releases/tag/v0.1.1">Download free preview</a><a href="#install">Installation guide</a></div>
+      <p class="small">v0.1.1 · Apple Silicon · Ad-hoc signed, not notarized.<br>Claude integration is experimental and undocumented.</p>
+    </div>
+    <figure class="icon-stage"><img src="assets/icon.png" width="192" height="192" alt="Quota icon: two green remaining-quota bars and a pin"><figcaption>A quiet utility.<br>Not another dashboard.</figcaption></figure>
+  </div>
+  <dl class="facts"><div><dt>Requires</dt><dd>macOS 14+</dd></div><div><dt>Languages</dt><dd>English / 한국어</dd></div><div><dt>Price</dt><dd>Free · MIT source</dd></div></dl>
+  <section aria-labelledby="why">
+    <h2 id="why">Keep accounts separate.<br>Keep limits in view.</h2>
+    <div class="row"><h3><span class="number">01 / Accounts</span>No CLI account swapping.</h3><p>Connect separate Codex profiles and Claude authorizations. Quota does not replace your existing terminal login. Account percentages are never averaged together.</p></div>
+    <div class="row"><h3><span class="number">02 / Remaining quota</span>Windows, not guesses.</h3><p>See the provider's returned limits and reset times: Claude's five-hour and weekly windows, and the windows your Codex account exposes. Missing limits stay unavailable, not 100%.</p></div>
+    <div class="row"><h3><span class="number">03 / Local utility</span>Beside your work.</h3><p>Pin the window, choose compact or expanded view, or check the menu bar. Refresh runs every five minutes while the app is open. No Quota server, telemetry, subscription or paid feature unlocks.</p></div>
+  </section>
+  <section id="install" aria-labelledby="install-title">
+    <h2 id="install-title">Install the free preview.</h2>
+    <ol><li>Download <a href="https://github.com/gridi-ai/quota/releases/tag/v0.1.1">Quota 0.1.1 for Apple Silicon</a>, unzip it and move <strong>Quota.app</strong> into Applications. No Xcode is needed.</li><li>This build is not notarized. If macOS blocks it, review the source, then use <strong>System Settings → Privacy &amp; Security → Open Anyway</strong>. Do not disable Gatekeeper.</li><li>Open Quota and choose <strong>Add account</strong>. Codex needs the <a href="https://developers.openai.com/codex/cli/">official Codex CLI</a>; Claude uses a browser authorization code. Choose English or Korean in Settings.</li></ol>
+    <p>Prefer Terminal or use an Intel Mac? See the <a href="https://github.com/gridi-ai/quota#install-in-one-minute">verified installer</a> or <a href="https://github.com/gridi-ai/quota#build-from-source">source build</a>.</p>
+    <aside class="notice" aria-label="Preview limitations"><p><strong>Read before connecting Claude.</strong> The current integration uses Claude Code's public OAuth client and undocumented usage endpoints. It is not an approved Quota integration. Anthropic's <a href="https://code.claude.com/docs/en/legal-and-compliance#authentication-and-credential-use">authentication rules restrict third-party Claude.ai login and token handling</a>. Provider changes can break it.</p><p>Before wider distribution, the proposed alternatives are official Claude Code status-line snapshots or explicit provider permission. <a href="https://github.com/gridi-ai/quota/blob/main/docs/EXPERIMENT.md#5-비공개-claude-조회-의존성이란">Read the integration trade-offs</a>.</p></aside>
+  </section>
+  <section id="questions" aria-labelledby="questions-title">
+    <h2 id="questions-title">A few useful answers.</h2>
+    <details open><summary>Does Quota track API costs or subscription quota?</summary><p>Subscription quota: remaining percentages and reset times returned for your Claude or ChatGPT/Codex account. It does not estimate API billing, buy more quota or make model requests to measure usage.</p></details>
+    <details><summary>Can I track multiple Claude and Codex accounts?</summary><p>Yes. Each account has a separate identity and snapshot. Codex uses a distinct profile for each account. Claude uses a separate authorization. Two Codex accounts and one Claude account were live-tested; second-Claude isolation and a complete token-expiry cycle remain extended checks.</p></details>
+    <details><summary>Do I need to keep a CLI or browser open?</summary><p>Codex requires its CLI, which Quota starts as a local app-server helper. The current experimental Claude integration does not require a running browser or Claude CLI after pairing. A future status-line alternative would depend on Claude Code activity and could not independently refresh inactive accounts.</p></details>
+    <details><summary>Where are my credentials stored?</summary><p>Claude tokens use account-specific macOS Keychain entries. Codex owns credentials in each selected profile. Account metadata and last-known quota stay on your Mac. There is no Quota backend or analytics. Removing a row does not revoke provider grants or erase credentials; see the <a href="https://github.com/gridi-ai/quota#controls-and-privacy">privacy and removal guide</a>.</p></details>
+    <details><summary>Is Quota free? What does coffee support unlock?</summary><p>Every feature is free, with no subscription or account cap. <a href="https://ko-fi.com/gridi">Buying the developer a coffee</a> is optional and unlocks nothing. The source is MIT licensed.</p></details>
+    <details><summary>Is this an App Store or notarized release?</summary><p>No. This is an ad-hoc signed community preview, not Apple-notarized or submitted to the App Store. A store edition would need separate sandbox, helper and service-permission verification.</p></details>
+  </section>
+</main>
+<footer class="wrap"><nav aria-label="Project links"><a href="https://github.com/gridi-ai/quota">GitHub source</a><a href="https://github.com/gridi-ai/quota/issues">Report an issue</a><a href="https://ko-fi.com/gridi">Buy a coffee</a><a href="ko/" lang="ko" hreflang="ko">한국어 안내</a></nav><p class="small">Quota by gridi-ai. Independent community software; not affiliated with OpenAI or Anthropic. No tracking scripts on this page.</p></footer>
+</body>
+</html>

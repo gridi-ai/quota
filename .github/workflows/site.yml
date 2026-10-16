@@ -1,0 +1,50 @@
+name: Verify discovery site
+on:
+  pull_request:
+    paths: ["site/**", "scripts/build-site.sh", "scripts/check-site.py", "Resources/**", ".github/workflows/site.yml"]
+  push:
+    branches: [main]
+    paths: ["site/**", "scripts/build-site.sh", "scripts/check-site.py", "Resources/**", ".github/workflows/site.yml"]
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: Publish the reviewed site to GitHub Pages
+        type: boolean
+        default: false
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: bash scripts/build-site.sh
+      - run: python3 scripts/check-site.py .build/site
+      - uses: actions/upload-artifact@v4
+        with:
+          name: quota-discovery-site
+          path: .build/site
+          include-hidden-files: true
+          if-no-files-found: error
+      - uses: actions/upload-pages-artifact@v4
+        if: github.event_name == 'workflow_dispatch' && inputs.publish && github.ref == 'refs/heads/main'
+        with:
+          path: .build/site
+  deploy:
+    if: github.event_name == 'workflow_dispatch' && inputs.publish && github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    concurrency:
+      group: quota-pages
+      cancel-in-progress: false
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/configure-pages@v5
+      - id: deployment
+        uses: actions/deploy-pages@v4
