@@ -2,6 +2,10 @@
 
 [English](README.md) · **무료 설치 · 구독료 없음 · 한국어/영어 · macOS 14 이상**
 
+[서비스 소개](https://gridi-ai.github.io/quota/ko/) ·
+[English website](https://gridi-ai.github.io/quota/) ·
+[무료 설치](https://github.com/gridi-ai/quota/releases/tag/v0.1.1)
+
 개인·업무용 Claude와 Codex 구독 계정의 **남은 사용량**을 메모지처럼 작은 창과
 메뉴 막대에 표시합니다. 핀으로 항상 위에 띄울 수 있고, 없는 한도를 100%라고
 추정하거나 서로 다른 계정의 퍼센트를 평균내지 않습니다.

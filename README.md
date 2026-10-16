@@ -9,6 +9,10 @@ sticky-note window, or glance at your macOS menu bar.
 > 여러 Claude·Codex 구독 계정의 남은 사용량을 한 화면에서 확인하는 macOS 앱입니다.
 > English / 한국어 UI: Settings → Language. [한국어 설치 안내](README.ko.md)
 
+[Website](https://gridi-ai.github.io/quota/) ·
+[한국어 소개](https://gridi-ai.github.io/quota/ko/) ·
+[Free preview](https://github.com/gridi-ai/quota/releases/tag/v0.1.1)
+
 ## What is Quota?
 
 Quota is a free native Mac app for viewing **Claude and Codex subscription usage

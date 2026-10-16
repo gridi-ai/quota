@@ -23,12 +23,13 @@ SoftwareApplication JSON-LD와 sitemap을 제공한다. 무료 가격·OS·버�
 앱과 일치시키고 평점·리뷰·인기 수치는 만들지 않는다. JSON-LD가 있다고
 Google 앱 rich result 자격이나 노출이 보장되는 것은 아니다.
 
-기본 배포 대상으로 준비한 주소는 `https://gridi-ai.github.io/quota/`와 `/ko/`다.
-**구현·로컬 검증과 인터넷 게시를 구분한다.** Pages 활성화나 배포는 승인 후
-별도로 실행한다. `site.yml`의 push/PR 실행은 검증과 artifact 생성만 한다.
-main에서 수동 실행하며 `publish=true`를 명시한 경우에만 배포하도록 준비했다.
-이 옵션은 실행하지 않았다.
-현재 README에는 아직 게시되지 않은 주소 대신 실제 릴리스와 소스 문서만 연결한다.
+현재 공개 주소는 [영어](https://gridi-ai.github.io/quota/)와
+[한국어](https://gridi-ai.github.io/quota/ko/)다. 사용자의 커밋·푸시·공개 승인을
+받아 Pages를 활성화하고 `5221051`을 게시했다. 두 경로의 HTTPS/200, 데스크톱·모바일
+실제 렌더링, 공개 파일과 검증한 빌드의 byte 일치를 확인했다.
+`site.yml`의 push/PR 실행은 검증과 artifact 생성만 하며,
+main에서 수동 실행하고 `publish=true`를 명시한 경우에만 배포한다.
+README와 저장소 homepage도 실제 공개 주소에 연결한다.
 
 ## 근거
 
@@ -91,20 +92,23 @@ python3 scripts/check-site.py .build/site
 
 배포 artifact는 `.build/site`만 사용한다. 저장소 전체나 `docs/`를 Pages로
 공개하지 않아 세션·검증 이미지·내부 초안·계정 파일이 섞이지 않는다.
-현재 사이트의 도메인·소스·외부 링크를 검토한 뒤 GitHub Pages를 이 저장소에
-활성화하고 이 artifact를 배포하는 승인이 필요하다. 도메인을 바꾸면 두 페이지의
+현재 사이트의 도메인·소스·외부 링크를 검토한 뒤 사용자의 명시적 승인으로
+GitHub Pages를 이 저장소에 활성화하고 이 artifact를 배포했다. 도메인을 바꾸면 두 페이지의
 canonical/hreflang/OG/schema와 sitemap, 검증기의 BASE를 함께 바꾸고 다시 검증한다.
 
-승인된 뒤 Pages를 GitHub Actions 배포 모드로 활성화하고 다음 수동 실행을 사용한다:
+Pages는 GitHub Actions 배포 모드이며, 승인된 게시 때 다음 수동 실행을 사용한다:
 
 ```sh
 gh workflow run site.yml --ref main -f publish=true
 ```
 
-현재 변경은 아직 커밋·푸시하지 않았다. GitHub의 workflow run, Pages 게시,
-README 홈페이지 링크·저장소 homepage 변경은 게시 승인 후 실제 URL을 확인하며
-진행한다. [공식 workflow 문서](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages)의
+초기 공개 커밋은 `5221051`이고 [배포 실행 38920931991](https://github.com/gridi-ai/quota/actions/runs/38920931991)이
+성공했다. 앱 검증·사이트 검증도 통과했다. 공개 HTML/CSS/아이콘/sitemap을
+다운로드해 검사했고 빌드와 정확히 일치했다. [공식 workflow 문서](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages)의
 artifact·needs·environment·최소 배포 권한 구조를 따른다.
+
+사이트 게시와 검색 등록은 별개다. Search Console/Bing 소유권 확인·sitemap 제출,
+IndexNow 요청은 실행하지 않았으며 검색 색인·AI 답변 인용을 확인했다고 주장하지 않는다.
 
 소유자가 할 실제 검색 등록:
 
