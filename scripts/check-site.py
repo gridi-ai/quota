@@ -14,7 +14,7 @@ from xml.etree import ElementTree
 
 BASE: Final = "https://gridi-ai.github.io/quota/"
 PAGES: Final = {"en": "index.html", "ko": "ko/index.html"}
-VERIFICATION: Final = "JxAD8O8E1KHsCHm8u0fxhPfO-e3sYyT6LqvX9YQL2mc"
+VERIFICATION: Final = "nh69oTnu8QEwRXzfaPvW7gQUUo_XGmgMBAEZhi_BoDA"
 MEASUREMENT: Final = "G-F6CXXVY4FY"
 GOOGLE_TAG: Final = f"https://www.googletagmanager.com/gtag/js?id={MEASUREMENT}"
 

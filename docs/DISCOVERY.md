@@ -44,11 +44,10 @@ config에서 비활성화했다. Mac 앱의 인증·계정 저장·분석 수집
 클릭을 앱 설치 완료로 해석하지 않는다. 태그 배포·네트워크 요청 검증은 GA 보고서
 수신이나 Search Console의 소유권 승인과도 별개다.
 
-제공된 `google-site-verification=...` 표기는 DNS TXT 방식에서 쓰인다.
-공유 `github.io` 호스트의 DNS는 수정하지 않는다. URL-prefix 속성
-`https://gridi-ai.github.io/quota/`의 HTML 태그 인증용 값이 맞는지 사용자가
-Search Console에서 확인해야 한다. Domain 속성의 DNS 인증을 메타태그가
-대신한다고 주장하지 않는다.
+사용자가 URL-prefix 속성 `https://gridi-ai.github.io/quota/`의 HTML 태그 인증값을
+새로 제공하여 두 언어 페이지와 검증 스크립트에 교체했다. 배포 후 Search Console에서
+HTML 태그 방식의 확인을 눌러야 소유권 인증이 완료된다. 공유 `github.io` 호스트의
+DNS는 수정하지 않으며, Domain 속성의 DNS 인증을 메타태그가 대신하지 않는다.
 
 ## 근거
 
